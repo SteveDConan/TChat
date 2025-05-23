@@ -1,0 +1,40 @@
+{
+    "general": {
+        "loading": "Đang tải, vui lòng đợi...",
+        "success": "Thành công",
+        "error": "Lỗi",
+        "warning": "Cảnh báo",
+        "confirm": "Xác nhận",
+        "cancel": "Hủy",
+        "close": "Đóng"
+    },
+    "login": {
+        "title": "Đăng nhập",
+        "phone": "Số điện thoại",
+        "code": "Mã xác thực",
+        "submit": "Xác nhận",
+        "2fa": "Mật khẩu 2FA",
+        "success": "Đăng nhập thành công",
+        "error": "Đăng nhập thất bại"
+    },
+    "main": {
+        "title": "Công cụ tự động Telegram",
+        "settings": "Cài đặt",
+        "accounts": "Tài khoản",
+        "check_live": "Kiểm tra trạng thái",
+        "update": "Kiểm tra cập nhật",
+        "language": "Ngôn ngữ"
+    },
+    "check_live": {
+        "title": "Kiểm tra trạng thái",
+        "start": "Bắt đầu",
+        "stop": "Dừng",
+        "copy": "Sao chép kết quả",
+        "delete": "Xóa tài khoản không hoạt động",
+        "status": {
+            "active": "Hoạt động",
+            "inactive": "Không hoạt động",
+            "checking": "Đang kiểm tra..."
+        }
+    }
+} 

@@ -1,0 +1,40 @@
+{
+    "general": {
+        "loading": "加载中，请稍候...",
+        "success": "成功",
+        "error": "错误",
+        "warning": "警告",
+        "confirm": "确认",
+        "cancel": "取消",
+        "close": "关闭"
+    },
+    "login": {
+        "title": "登录",
+        "phone": "电话号码",
+        "code": "验证码",
+        "submit": "提交",
+        "2fa": "二次验证密码",
+        "success": "登录成功",
+        "error": "登录失败"
+    },
+    "main": {
+        "title": "Telegram自动化工具",
+        "settings": "设置",
+        "accounts": "账户",
+        "check_live": "检查状态",
+        "update": "检查更新",
+        "language": "语言"
+    },
+    "check_live": {
+        "title": "检查账户状态",
+        "start": "开始检查",
+        "stop": "停止",
+        "copy": "复制结果",
+        "delete": "删除无效账户",
+        "status": {
+            "active": "活跃",
+            "inactive": "无效",
+            "checking": "检查中..."
+        }
+    }
+} 

@@ -1,0 +1,40 @@
+{
+    "general": {
+        "loading": "Loading, please wait...",
+        "success": "Success",
+        "error": "Error",
+        "warning": "Warning",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "close": "Close"
+    },
+    "login": {
+        "title": "Login",
+        "phone": "Phone Number",
+        "code": "Verification Code",
+        "submit": "Submit",
+        "2fa": "2FA Password",
+        "success": "Login successful",
+        "error": "Login failed"
+    },
+    "main": {
+        "title": "Telegram Automation Tool",
+        "settings": "Settings",
+        "accounts": "Accounts",
+        "check_live": "Check Live",
+        "update": "Check for Updates",
+        "language": "Language"
+    },
+    "check_live": {
+        "title": "Check Live Status",
+        "start": "Start Check",
+        "stop": "Stop",
+        "copy": "Copy Results",
+        "delete": "Delete Inactive",
+        "status": {
+            "active": "Active",
+            "inactive": "Inactive",
+            "checking": "Checking..."
+        }
+    }
+} 
