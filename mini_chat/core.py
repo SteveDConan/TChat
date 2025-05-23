@@ -157,50 +157,75 @@ def toggle_mini_chat_pause():
         append_mini_chat("Mini Chat đã được phục hồi.")
 
 def create_mini_chat():
-    global mini_chat_win, mini_chat_text, mini_chat_entry, TARGET_LANG_SELECTION, MY_LANG_SELECTION, DPI_ENABLED, mini_chat_pause_button
+    global mini_chat_win, mini_chat_text, mini_chat_entry
+    global TARGET_LANG_SELECTION, MY_LANG_SELECTION, DPI_ENABLED, mini_chat_pause_button
+
     if root is None:
         print("Consolog [ERROR]: root chưa được set trong mini chat. Gọi set_root(root) trước khi tạo mini chat.")
         return
+
+    # --- MAPPING CODE <-> TÊN ĐẦY ĐỦ ---
+    LANG_CODE_TO_NAME = {
+        "en": "English",
+        "vi": "Vietnamese",
+        "fr": "French",
+        "es": "Spanish",
+        "de": "German",
+        "zh": "Chinese",
+        "km": "Khmer",
+        "pt": "Portuguese"
+    }
+    NAME_TO_LANG_CODE = {name: code for code, name in LANG_CODE_TO_NAME.items()}
+
     mini_chat_win = tk.Toplevel(root)
     mini_chat_win.title("Mini Chat")
 
-    # Consolog [MODIFIED]: Cập nhật vị trí cửa sổ mini chat với margin 10px bên phải và dưới màn hình
+    # Vị trí cửa sổ
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
-    width = 530
-    height = 350
-    x = screen_width - width - 10  # cách mép phải 10px
-    y = screen_height - height - 10  # cách mép dưới 10px
+    width, height = 530, 350
+    x = screen_width - width - 10
+    y = screen_height - height - 10
     mini_chat_win.geometry(f"{width}x{height}+{x}+{y}")
     mini_chat_win.attributes("-topmost", True)
 
-    # Consolog: Thêm menu chọn ngôn ngữ cho Mini Chat và checkbox DPI
+    # --- MENU CHỌN NGÔN NGỮ & DPI ---
     menu_frame = tk.Frame(mini_chat_win)
     menu_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
-    
-    tk.Label(menu_frame, text="Ngôn ngữ của tôi:").pack(side=tk.LEFT, padx=5)
-    my_lang_var = tk.StringVar(value=MY_LANG_SELECTION)
-    # Consolog [CHANGED-BRAZIL]: Bổ sung thêm "pt" cho ngôn ngữ Brazil vào danh sách ngôn ngữ
-    my_lang_options = ["en", "vi", "fr", "es", "de", "zh", "km", "pt"]
-    def update_my_lang(val):
+
+    # My Language
+    tk.Label(menu_frame, text="My Language:").pack(side=tk.LEFT, padx=5)
+    my_lang_display_var = tk.StringVar(value=LANG_CODE_TO_NAME.get(MY_LANG_SELECTION, "English"))
+    my_lang_display_options = list(LANG_CODE_TO_NAME.values())
+    def on_my_lang_display_select(chosen_name):
         global MY_LANG_SELECTION
-        MY_LANG_SELECTION = val
+        MY_LANG_SELECTION = NAME_TO_LANG_CODE[chosen_name]
         print(f"Consolog: Đã cập nhật ngôn ngữ của tôi: {MY_LANG_SELECTION}")
-    my_lang_menu = tk.OptionMenu(menu_frame, my_lang_var, *my_lang_options, command=update_my_lang)
+    my_lang_menu = tk.OptionMenu(
+        menu_frame,
+        my_lang_display_var,
+        *my_lang_display_options,
+        command=on_my_lang_display_select
+    )
     my_lang_menu.pack(side=tk.LEFT, padx=5)
-    
-    tk.Label(menu_frame, text="Ngôn ngữ của đối phương:").pack(side=tk.LEFT, padx=5)
-    target_lang_var = tk.StringVar(value=TARGET_LANG_SELECTION)
-    # Consolog [CHANGED-BRAZIL]: Bổ sung thêm "pt" cho ngôn ngữ Brazil vào danh sách ngôn ngữ
-    target_lang_options = ["vi", "en", "fr", "es", "de", "zh", "km", "pt"]
-    def update_target_lang(val):
+
+    # Target Language
+    tk.Label(menu_frame, text="Target Language:").pack(side=tk.LEFT, padx=5)
+    target_lang_display_var = tk.StringVar(value=LANG_CODE_TO_NAME.get(TARGET_LANG_SELECTION, "Vietnamese"))
+    target_lang_display_options = list(LANG_CODE_TO_NAME.values())
+    def on_target_lang_display_select(chosen_name):
         global TARGET_LANG_SELECTION
-        TARGET_LANG_SELECTION = val
+        TARGET_LANG_SELECTION = NAME_TO_LANG_CODE[chosen_name]
         print(f"Consolog: Đã cập nhật ngôn ngữ của đối phương: {TARGET_LANG_SELECTION}")
-    target_lang_menu = tk.OptionMenu(menu_frame, target_lang_var, *target_lang_options, command=update_target_lang)
+    target_lang_menu = tk.OptionMenu(
+        menu_frame,
+        target_lang_display_var,
+        *target_lang_display_options,
+        command=on_target_lang_display_select
+    )
     target_lang_menu.pack(side=tk.LEFT, padx=5)
 
-    # Consolog: Thêm checkbox cho DPI
+    # DPI checkbox
     dpi_var = tk.BooleanVar(value=DPI_ENABLED)
     def update_dpi():
         global DPI_ENABLED
@@ -208,8 +233,8 @@ def create_mini_chat():
         print(f"Consolog: Cập nhật DPI_ENABLED thành: {DPI_ENABLED}")
     dpi_checkbox = tk.Checkbutton(menu_frame, text="DPI", variable=dpi_var, command=update_dpi)
     dpi_checkbox.pack(side=tk.LEFT, padx=5)
-    
-    # Consolog: Thêm nút lưu cài đặt ngôn ngữ và DPI
+
+    # Save button
     save_button = tk.Button(menu_frame, text="Save", command=save_config)
     save_button.pack(side=tk.LEFT, padx=5)
 
@@ -217,7 +242,7 @@ def create_mini_chat():
     mini_chat_text = tk.Text(mini_chat_win, height=15, width=60, state=tk.DISABLED)
     mini_chat_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-    # Khung nhập tin nhắn
+    # Khung nhập tin nhắn và các nút
     frame_input = tk.Frame(mini_chat_win)
     frame_input.pack(side=tk.BOTTOM, fill=tk.X)
 
@@ -227,20 +252,18 @@ def create_mini_chat():
 
     btn_send = tk.Button(frame_input, text="Send", command=send_mini_chat_message)
     btn_send.pack(side=tk.LEFT, padx=5)
-    
-    # Consolog: Thêm nút Pause/Resume bên cạnh nút Send để tạm dừng/khôi phục mini chat
+
     mini_chat_pause_button = tk.Button(frame_input, text="Pause", command=toggle_mini_chat_pause)
     mini_chat_pause_button.pack(side=tk.LEFT, padx=5)
-    print("Consolog: Đã thêm nút Pause/Resume vào mini chat.")
-    
-    # Consolog: Thêm nút "Clear" bên cạnh nút "Send" để xóa toàn bộ nội dung của mini chat
+
     btn_clear = tk.Button(frame_input, text="Clear", command=clear_mini_chat)
     btn_clear.pack(side=tk.LEFT, padx=5)
-    print("Consolog: Đã thêm nút 'Clear' vào mini chat.")
-    print("Consolog: Đã bổ sung ngôn ngữ Trung Quốc ('zh'), Cambodia ('km'), Brazil ('pt') và checkbox DPI vào menu của Mini Chat.")
 
-    # [ADDED - INACTIVITY]: Khởi động thread theo dõi thời gian không hoạt động của mini chat (chỉ áp dụng cho mini chat)
+    # Khởi động thread theo dõi inactivity
     threading.Thread(target=mini_chat_inactivity_monitor, daemon=True).start()
+
+    print("Consolog: Đã khởi tạo Mini Chat với dropdown hiển thị tên ngôn ngữ đầy đủ.")
+
 
 def clear_mini_chat():
     global mini_chat_text
