@@ -27,7 +27,7 @@ except ImportError:
 root = None  # Biến root sẽ được set từ app.py
 CHATGPT_API_KEY = None
 TRANSLATION_ONLY = True
-DEFAULT_TARGET_LANG = "vi"
+DEFAULT_TARGET_LANG = "en"
 
 # Consolog: Thêm biến cho ngôn ngữ của tôi và của đối phương (mặc định)
 # [CHANGED]: Đổi MY_LANG_SELECTION từ 'en' thành 'vi' để phù hợp với yêu cầu hiển thị nội dung dịch sang ngôn ngữ của bạn.
@@ -61,6 +61,25 @@ last_valid_telegram_hwnd = None
 # [ADDED]: Biến cờ để kiểm soát thread của widget mini chatgpt, dùng để dừng thread khi destroy
 widget_mini_chat_thread_running = True
 print("Consolog: Đã khởi tạo biến widget_mini_chat_thread_running = True để quản lý thread widget mini chat.")
+
+# ----- module-level, đặt ngay dưới import tkinter as tk, threading, … -----
+LANG_CODE_TO_NAME = {
+    "en": "English",
+    "vi": "Vietnamese",
+    "fr": "French",
+    "es": "Spanish",
+    "de": "German",
+    "zh": "Chinese",
+    "km": "Khmer",
+    "pt": "Portuguese",
+}
+NAME_TO_LANG_CODE = {name: code for code, name in LANG_CODE_TO_NAME.items()}
+
+# Shared StringVar cho cả hai widget
+target_lang_display_var = tk.StringVar(
+    value=LANG_CODE_TO_NAME.get(TARGET_LANG_SELECTION, "English")
+)
+
 
 # Consolog: Tạo hàm nhận root từ app.py (để Mini Chat có thể dùng)
 def set_root(r):
@@ -164,19 +183,6 @@ def create_mini_chat():
         print("Consolog [ERROR]: root chưa được set trong mini chat. Gọi set_root(root) trước khi tạo mini chat.")
         return
 
-    # --- MAPPING CODE <-> TÊN ĐẦY ĐỦ ---
-    LANG_CODE_TO_NAME = {
-        "en": "English",
-        "vi": "Vietnamese",
-        "fr": "French",
-        "es": "Spanish",
-        "de": "German",
-        "zh": "Chinese",
-        "km": "Khmer",
-        "pt": "Portuguese"
-    }
-    NAME_TO_LANG_CODE = {name: code for code, name in LANG_CODE_TO_NAME.items()}
-
     mini_chat_win = tk.Toplevel(root)
     mini_chat_win.title("Mini Chat")
 
@@ -195,7 +201,7 @@ def create_mini_chat():
 
     # My Language
     tk.Label(menu_frame, text="My Language:").pack(side=tk.LEFT, padx=5)
-    my_lang_display_var = tk.StringVar(value=LANG_CODE_TO_NAME.get(MY_LANG_SELECTION, "English"))
+    my_lang_display_var = tk.StringVar(value=LANG_CODE_TO_NAME.get(MY_LANG_SELECTION, "Vietnamese"))
     my_lang_display_options = list(LANG_CODE_TO_NAME.values())
     def on_my_lang_display_select(chosen_name):
         global MY_LANG_SELECTION
@@ -211,7 +217,6 @@ def create_mini_chat():
 
     # Target Language
     tk.Label(menu_frame, text="Target Language:").pack(side=tk.LEFT, padx=5)
-    target_lang_display_var = tk.StringVar(value=LANG_CODE_TO_NAME.get(TARGET_LANG_SELECTION, "Vietnamese"))
     target_lang_display_options = list(LANG_CODE_TO_NAME.values())
     def on_target_lang_display_select(chosen_name):
         global TARGET_LANG_SELECTION
@@ -827,56 +832,65 @@ class WINDOWPLACEMENT(ctypes.Structure):
         ("rcNormalPosition", ctypes.wintypes.RECT),
     ]
 
-def create_mini_chatgpt():
-    """Tạo widget mini chatgpt với kích thước bằng ô input của mini chat, bao gồm nút Send, Zoom và Quit.
+
+
+"""Tạo widget mini chatgpt với kích thước bằng ô input của mini chat, bao gồm nút Send, Zoom và Quit.
     Widget này luôn ở “đít” (bottom) của cửa sổ Telegram, tự động cập nhật vị trí khi cửa sổ di chuyển.
     """
+def create_mini_chatgpt():
     global mini_chatgpt_win, mini_chatgpt_entry, mini_chatgpt_pause_button
+    global target_lang_display_var  # <-- thêm biến chung
+
     if root is None:
         print("Consolog [ERROR]: root chưa được set. Gọi set_root(root) trước khi tạo widget mini chatgpt.")
         return
+
     mini_chatgpt_win = tk.Toplevel(root)
     mini_chatgpt_win.title("Mini ChatGPT Widget")
-    # Sử dụng overrideredirect để bỏ frame tiêu đề (nếu muốn hiển thị giao diện “nhẹ”)
     mini_chatgpt_win.overrideredirect(True)
     mini_chatgpt_win.attributes("-topmost", False)
-    
-    # Consolog [MODIFIED]: Tạm thời đặt kích thước ban đầu, sau đó update dựa theo kích thước của cửa sổ Telegram
-    widget_width = 400
-    widget_height = 40
+
+    widget_width, widget_height = 400, 40
     mini_chatgpt_win.geometry(f"{widget_width}x{widget_height}+0+0")
-    
-    # Consolog [MODIFIED]: Ẩn widget ngay khi khởi tạo vì chưa phát hiện được HWND của Telegram
     mini_chatgpt_win.withdraw()
     print("Consolog: Widget mini chatgpt được khởi tạo và ẩn do chưa phát hiện được HWND của Telegram.")
-    
-    # Khung chứa ô nhập và các nút (sử dụng grid để căn chỉnh các nút sang bên phải)
+
     frame = tk.Frame(mini_chatgpt_win)
     frame.pack(fill=tk.BOTH, expand=True)
-    
+
+    # --- Entry và các nút Send / Zoom / Quit như trước ---
     mini_chatgpt_entry = tk.Entry(frame)
-    # Sử dụng grid: Entry ở cột 0 chiếm không gian mở rộng
-    mini_chatgpt_entry.grid(row=0, column=0, sticky="we", padx=(5, 2), pady=5)
+    mini_chatgpt_entry.grid(row=0, column=0, sticky="we", padx=(5,2), pady=1)
     frame.columnconfigure(0, weight=1)
-    # Consolog [ADDED]: Bổ sung binding <Return> cho widget mini chatgpt để gửi tin nhắn khi nhấn Enter
-    mini_chatgpt_entry.bind("<Return>", lambda event: send_mini_chatgpt_message())
-    
+    mini_chatgpt_entry.bind("<Return>", lambda e: send_mini_chatgpt_message())
+
     btn_send = tk.Button(frame, text="Send", command=send_mini_chatgpt_message)
-    btn_send.grid(row=0, column=1, padx=2, sticky="e")
-    
-    # Consolog [MODIFIED - WIDGET]: Loại bỏ kiểm tra trạng thái tạm dừng đối với widget mini chat (bỏ qua nút Pause => chuyển thành nút Zoom)
+    btn_send.grid(row=0, column=1, padx=2)
+
     btn_zoom = tk.Button(frame, text="Zoom", command=toggle_mini_chat_zoom)
-    btn_zoom.grid(row=0, column=2, padx=2, sticky="e")
-    # Gán nút này vào biến toàn cục (dù ở đây vẫn dùng biến mini_chatgpt_pause_button, để không ảnh hưởng mã khác)
+    btn_zoom.grid(row=0, column=2, padx=2)
     mini_chatgpt_pause_button = btn_zoom
 
     btn_quit = tk.Button(frame, text="Quit", command=destroy_mini_chatgpt)
-    btn_quit.grid(row=0, column=3, padx=2, sticky="e")
-    
-    print("Consolog: Đã tạo widget mini chatgpt với nút Send, Zoom và Quit.")
-    
-    # Bắt đầu thread cập nhật vị trí để bám sát cửa sổ Telegram
+    btn_quit.grid(row=0, column=3, padx=2)
+
+    # --- Bổ sung dropdown Target Language ---
+    def on_target_lang_select(chosen_name):
+        global TARGET_LANG_SELECTION
+        TARGET_LANG_SELECTION = NAME_TO_LANG_CODE[chosen_name]
+        print(f"Consolog: Đã cập nhật ngôn ngữ đích: {TARGET_LANG_SELECTION}")
+    target_lang_menu = tk.OptionMenu(
+        frame,
+        target_lang_display_var,
+        *LANG_CODE_TO_NAME.values(),
+        command=on_target_lang_select
+    )
+    target_lang_menu.grid(row=0, column=5, padx=2)
+
+    print("Consolog: Đã tạo widget mini chatgpt với nút Send, Zoom, Quit và dropdown Target Language.")
+
     threading.Thread(target=update_mini_chatgpt_position, daemon=True).start()
+
 
 def send_mini_chatgpt_message():
     """Xử lý gửi tin từ widget mini chatgpt.
