@@ -69,7 +69,7 @@ TRANSLATION_ONLY = True
 print("Consolog: Chế độ 'chỉ dịch' được bật (TRANSLATION_ONLY=True).")
 
 # NEW: Biến mặc định cho ngôn ngữ dịch của đối phương (default là tiếng Việt)
-DEFAULT_TARGET_LANG = "vi"
+DEFAULT_TARGET_LANG = "en"
 
 # --- CẤU HÌNH BAN ĐẦU (DEFAULT) ---
 CONFIG_FILE = "config.txt"

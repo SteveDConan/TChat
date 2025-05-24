@@ -174,7 +174,8 @@ def toggle_mini_chat_pause():
             mini_chatgpt_pause_button.config(text="Pause")
         print("Consolog: Mini Chat đã được phục hồi.")
         append_mini_chat("Mini Chat đã được phục hồi.")
-
+        
+# Mini chat ô to
 def create_mini_chat():
     global mini_chat_win, mini_chat_text, mini_chat_entry
     global TARGET_LANG_SELECTION, MY_LANG_SELECTION, DPI_ENABLED, mini_chat_pause_button
@@ -335,7 +336,7 @@ def perform_ocr(image, lang="eng+chi_sim+chi_tra"):
     return ocr_text
 # -----------------------------------------------
 
-def translate_text_via_chatgpt(text, source_lang="auto", target_lang="vi", conversation_context=""):
+def translate_text_via_chatgpt(text, source_lang="auto", target_lang="en", conversation_context=""):
     global CHATGPT_API_KEY
     if not CHATGPT_API_KEY:
         append_mini_chat("Mini Chat [ERROR]: ChatGPT API key not set.")
@@ -833,7 +834,7 @@ class WINDOWPLACEMENT(ctypes.Structure):
     ]
 
 
-
+# Mini chat input dài trên cửa sổ telegram
 """Tạo widget mini chatgpt với kích thước bằng ô input của mini chat, bao gồm nút Send, Zoom và Quit.
     Widget này luôn ở “đít” (bottom) của cửa sổ Telegram, tự động cập nhật vị trí khi cửa sổ di chuyển.
     """
@@ -851,7 +852,11 @@ def create_mini_chatgpt():
     mini_chatgpt_win.attributes("-topmost", False)
 
     widget_width, widget_height = 400, 40
-    mini_chatgpt_win.geometry(f"{widget_width}x{widget_height}+0+0")
+    # Đặt widget dính sát mép trên của cửa sổ Telegram, cách 1px
+    root.update_idletasks()
+    tele_x = 1  # giữ nguyên vị trí ngang (cách trái 1px)
+    tele_y = root.winfo_rooty()  # cách mép trên của Telegram 1px
+    mini_chatgpt_win.geometry(f"{widget_width}x{widget_height}+{tele_x}+{tele_y}")
     mini_chatgpt_win.withdraw()
     print("Consolog: Widget mini chatgpt được khởi tạo và ẩn do chưa phát hiện được HWND của Telegram.")
 
@@ -860,37 +865,58 @@ def create_mini_chatgpt():
 
     # --- Entry và các nút Send / Zoom / Quit như trước ---
     mini_chatgpt_entry = tk.Entry(frame)
-    mini_chatgpt_entry.grid(row=0, column=0, sticky="we", padx=(5,2), pady=1)
+    mini_chatgpt_entry.grid(
+        row=0, column=0, sticky="we",
+        padx=4, pady=4, ipady=3  # tăng chiều cao thêm ~6px, padding mỗi bên 4px
+    )
+    mini_chatgpt_entry.config(
+        bd=1, relief="solid", font=("Segoe UI", 10)
+    )
     frame.columnconfigure(0, weight=1)
     mini_chatgpt_entry.bind("<Return>", lambda e: send_mini_chatgpt_message())
 
-    btn_send = tk.Button(frame, text="Send", command=send_mini_chatgpt_message)
-    btn_send.grid(row=0, column=1, padx=2)
-
-    btn_zoom = tk.Button(frame, text="Zoom", command=toggle_mini_chat_zoom)
-    btn_zoom.grid(row=0, column=2, padx=2)
-    mini_chatgpt_pause_button = btn_zoom
-
-    btn_quit = tk.Button(frame, text="Quit", command=destroy_mini_chatgpt)
-    btn_quit.grid(row=0, column=3, padx=2)
-
-    # --- Bổ sung dropdown Target Language ---
+# --- Bổ sung dropdown Target Language ---
     def on_target_lang_select(chosen_name):
         global TARGET_LANG_SELECTION
         TARGET_LANG_SELECTION = NAME_TO_LANG_CODE[chosen_name]
         print(f"Consolog: Đã cập nhật ngôn ngữ đích: {TARGET_LANG_SELECTION}")
+
     target_lang_menu = tk.OptionMenu(
         frame,
         target_lang_display_var,
         *LANG_CODE_TO_NAME.values(),
         command=on_target_lang_select
     )
-    target_lang_menu.grid(row=0, column=5, padx=2)
+    target_lang_menu.grid(row=0, column=1, padx=4, pady=4)
+    target_lang_menu.config(
+        font=("Segoe UI", 9), bd=1, relief="solid"
+    )
+
+    btn_send = tk.Button(frame, text="Send", command=send_mini_chatgpt_message)
+    btn_send.grid(row=0, column=2, padx=4, pady=4)
+    btn_send.config(
+        bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
+    )
+
+    btn_zoom = tk.Button(frame, text="Zoom", command=toggle_mini_chat_zoom)
+    btn_zoom.grid(row=0, column=3, padx=4, pady=4)
+    btn_zoom.config(
+        bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
+    )
+    mini_chatgpt_pause_button = btn_zoom
+
+    btn_quit = tk.Button(frame, text="x", command=destroy_mini_chatgpt)
+    btn_quit.grid(row=0, column=4, padx=4, pady=4)
+    btn_quit.config(
+        bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
+    )
+
+    
 
     print("Consolog: Đã tạo widget mini chatgpt với nút Send, Zoom, Quit và dropdown Target Language.")
 
+    # Bắt đầu thread cập nhật vị trí để bám sát cửa sổ Telegram
     threading.Thread(target=update_mini_chatgpt_position, daemon=True).start()
-
 
 def send_mini_chatgpt_message():
     """Xử lý gửi tin từ widget mini chatgpt.
@@ -898,38 +924,42 @@ def send_mini_chatgpt_message():
     Khác duy nhất là sau khi gửi, focus sẽ được đặt lại vào ô chat của widget mini chatgpt.
     """
     global mini_chatgpt_entry
+
     if mini_chatgpt_entry is None:
         return
+
     # Consolog [MODIFIED - WIDGET]: Bỏ qua kiểm tra mini_chat_paused để widget luôn hoạt động độc lập.
     # if mini_chat_paused:
     #     print("Consolog: Widget mini chatgpt (chung với mini chat) đang tạm dừng, không gửi tin.")
     #     return
+
     msg = mini_chatgpt_entry.get().strip()
     if not msg:
         return
     mini_chatgpt_entry.delete(0, tk.END)
     print("Consolog: [mini chatgpt] Người dùng nhập: " + msg)
-    
-    # [CHANGED]: Sử dụng get_correct_telegram_hwnd() thay cho get_active_telegram_hwnd()
+
     hwnd = get_correct_telegram_hwnd()
     if hwnd is None:
         print("Consolog [ERROR]: Widget mini chatgpt không tìm thấy cửa sổ Telegram đang active.")
         return
 
-    # Sử dụng ngôn ngữ đối phương từ menu đã đặt (nếu có)
-    target_lang = hwnd_target_lang.get(hwnd, TARGET_LANG_SELECTION)
+    # đảm bảo target_lang mặc định là 'en' nếu chưa có giá trị
+    default_target = TARGET_LANG_SELECTION or "en"
+    target_lang = hwnd_target_lang.get(hwnd, default_target)
     print(f"Consolog: [mini chatgpt] Sử dụng ngôn ngữ đối phương: {target_lang}")
+
     translated, _ = translate_text_via_chatgpt(msg, source_lang="auto", target_lang=target_lang)
     print("Consolog: [mini chatgpt] Tin nhắn sau dịch: " + translated)
-    
+
     try:
         send_message_to_telegram_input(hwnd, translated)
         print("Consolog: [mini chatgpt] Tin nhắn đã được gửi vào Telegram.")
-        # Consolog [MODIFIED]: Sau khi gửi, focus con trỏ được đặt lại vào ô chat của widget mini chatgpt
         mini_chatgpt_entry.focus_force()
         print("Consolog: Focus đã được đặt lại vào ô chat của widget mini chatgpt sau khi gửi tin.")
     except Exception as e:
         print("Consolog [ERROR]: Widget mini chatgpt gặp lỗi khi gửi tin: " + str(e))
+
 
 # ========================
 # [MODIFIED]: Hàm destroy_mini_chatgpt được chỉnh sửa theo yêu cầu
