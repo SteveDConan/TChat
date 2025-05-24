@@ -1,10 +1,12 @@
 import os
+
 # Consolog: Thiết lập TESSDATA_PREFIX để Tesseract có thể tải các file ngôn ngữ đúng cách
 # Sửa: Chỉ định thư mục tessdata chứa các file traineddata
 os.environ["TESSDATA_PREFIX"] = r"C:\Program Files\Tesseract-OCR\tessdata\\"
 
 import openai
 import pytesseract
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 import hashlib
 from langdetect import detect
@@ -49,7 +51,7 @@ mini_chat_last_active_time = time.time()
 mini_chatgpt_win = None
 mini_chatgpt_entry = None
 # Consolog [REMOVED]: Biến riêng cho widget mini chat pause. Chúng ta sẽ dùng chung trạng thái tạm dừng với mini chat.
-# mini_chatgpt_paused = False  
+# mini_chatgpt_paused = False
 mini_chatgpt_pause_button = None  # Biến toàn cục cho nút Pause của widget mini chatgpt
 # (Sau này nút này sẽ được đổi thành nút Zoom theo yêu cầu)
 
@@ -60,7 +62,9 @@ last_valid_telegram_hwnd = None
 
 # [ADDED]: Biến cờ để kiểm soát thread của widget mini chatgpt, dùng để dừng thread khi destroy
 widget_mini_chat_thread_running = True
-print("Consolog: Đã khởi tạo biến widget_mini_chat_thread_running = True để quản lý thread widget mini chat.")
+print(
+    "Consolog: Đã khởi tạo biến widget_mini_chat_thread_running = True để quản lý thread widget mini chat."
+)
 
 # ----- module-level, đặt ngay dưới import tkinter as tk, threading, … -----
 LANG_CODE_TO_NAME = {
@@ -86,6 +90,7 @@ def set_root(r):
     global root
     root = r
 
+
 # Consolog: Tạo hàm nhận các biến cài đặt liên quan ChatGPT từ app.py
 def set_mini_chat_globals(api_key, translation_only_flag, default_lang):
     global CHATGPT_API_KEY, TRANSLATION_ONLY, DEFAULT_TARGET_LANG
@@ -93,6 +98,7 @@ def set_mini_chat_globals(api_key, translation_only_flag, default_lang):
     TRANSLATION_ONLY = translation_only_flag
     DEFAULT_TARGET_LANG = default_lang
     print("Consolog: Đã set các biến toàn cục cho mini_chat.py")
+
 
 # Hàm load cấu hình từ file config.ini
 def load_config():
@@ -118,6 +124,7 @@ def load_config():
     else:
         print("Consolog: Không tìm thấy file config.ini, sử dụng cấu hình mặc định")
 
+
 # Gọi hàm load_config khi module được khởi tạo
 load_config()
 
@@ -141,6 +148,7 @@ user32 = ctypes.windll.user32
 # Consolog: CÁC HÀM LIÊN QUAN ĐẾN MINI CHAT ĐƯỢC TÁCH TỪ app.py
 ###############################################################
 
+
 # Consolog: Hàm mapping ngôn ngữ từ menu sang tham số ngôn ngữ của Tesseract
 def get_ocr_lang(lang):
     ocr_lang_map = {
@@ -151,11 +159,12 @@ def get_ocr_lang(lang):
         "de": "deu",
         "zh": "chi_sim+chi_tra",
         "km": "khm",
-        "pt": "por"
+        "pt": "por",
     }
     mapped_lang = ocr_lang_map.get(lang.lower(), "eng")
     print(f"Consolog: Mapping OCR cho ngôn ngữ '{lang}' thành '{mapped_lang}'")
     return mapped_lang
+
 
 def toggle_mini_chat_pause():
     global mini_chat_paused, mini_chat_pause_button, mini_chatgpt_pause_button
@@ -174,14 +183,17 @@ def toggle_mini_chat_pause():
             mini_chatgpt_pause_button.config(text="Pause")
         print("Consolog: Mini Chat đã được phục hồi.")
         append_mini_chat("Mini Chat đã được phục hồi.")
-        
+
+
 # Mini chat ô to
 def create_mini_chat():
     global mini_chat_win, mini_chat_text, mini_chat_entry
     global TARGET_LANG_SELECTION, MY_LANG_SELECTION, DPI_ENABLED, mini_chat_pause_button
 
     if root is None:
-        print("Consolog [ERROR]: root chưa được set trong mini chat. Gọi set_root(root) trước khi tạo mini chat.")
+        print(
+            "Consolog [ERROR]: root chưa được set trong mini chat. Gọi set_root(root) trước khi tạo mini chat."
+        )
         return
 
     mini_chat_win = tk.Toplevel(root)
@@ -202,42 +214,52 @@ def create_mini_chat():
 
     # My Language
     tk.Label(menu_frame, text="My Language:").pack(side=tk.LEFT, padx=5)
-    my_lang_display_var = tk.StringVar(value=LANG_CODE_TO_NAME.get(MY_LANG_SELECTION, "Vietnamese"))
+    my_lang_display_var = tk.StringVar(
+        value=LANG_CODE_TO_NAME.get(MY_LANG_SELECTION, "Vietnamese")
+    )
     my_lang_display_options = list(LANG_CODE_TO_NAME.values())
+
     def on_my_lang_display_select(chosen_name):
         global MY_LANG_SELECTION
         MY_LANG_SELECTION = NAME_TO_LANG_CODE[chosen_name]
         print(f"Consolog: Đã cập nhật ngôn ngữ của tôi: {MY_LANG_SELECTION}")
+
     my_lang_menu = tk.OptionMenu(
         menu_frame,
         my_lang_display_var,
         *my_lang_display_options,
-        command=on_my_lang_display_select
+        command=on_my_lang_display_select,
     )
     my_lang_menu.pack(side=tk.LEFT, padx=5)
 
     # Target Language
     tk.Label(menu_frame, text="Target Language:").pack(side=tk.LEFT, padx=5)
     target_lang_display_options = list(LANG_CODE_TO_NAME.values())
+
     def on_target_lang_display_select(chosen_name):
         global TARGET_LANG_SELECTION
         TARGET_LANG_SELECTION = NAME_TO_LANG_CODE[chosen_name]
         print(f"Consolog: Đã cập nhật ngôn ngữ của đối phương: {TARGET_LANG_SELECTION}")
+
     target_lang_menu = tk.OptionMenu(
         menu_frame,
         target_lang_display_var,
         *target_lang_display_options,
-        command=on_target_lang_display_select
+        command=on_target_lang_display_select,
     )
     target_lang_menu.pack(side=tk.LEFT, padx=5)
 
     # DPI checkbox
     dpi_var = tk.BooleanVar(value=DPI_ENABLED)
+
     def update_dpi():
         global DPI_ENABLED
         DPI_ENABLED = dpi_var.get()
         print(f"Consolog: Cập nhật DPI_ENABLED thành: {DPI_ENABLED}")
-    dpi_checkbox = tk.Checkbutton(menu_frame, text="DPI", variable=dpi_var, command=update_dpi)
+
+    dpi_checkbox = tk.Checkbutton(
+        menu_frame, text="DPI", variable=dpi_var, command=update_dpi
+    )
     dpi_checkbox.pack(side=tk.LEFT, padx=5)
 
     # Save button
@@ -259,7 +281,9 @@ def create_mini_chat():
     btn_send = tk.Button(frame_input, text="Send", command=send_mini_chat_message)
     btn_send.pack(side=tk.LEFT, padx=5)
 
-    mini_chat_pause_button = tk.Button(frame_input, text="Pause", command=toggle_mini_chat_pause)
+    mini_chat_pause_button = tk.Button(
+        frame_input, text="Pause", command=toggle_mini_chat_pause
+    )
     mini_chat_pause_button.pack(side=tk.LEFT, padx=5)
 
     btn_clear = tk.Button(frame_input, text="Clear", command=clear_mini_chat)
@@ -279,6 +303,7 @@ def clear_mini_chat():
         mini_chat_text.config(state=tk.DISABLED)
         print("Consolog: Đã xóa toàn bộ text trong mini chat.")
 
+
 def append_mini_chat(text):
     global mini_chat_text
     if mini_chat_text is None:
@@ -288,55 +313,69 @@ def append_mini_chat(text):
     mini_chat_text.see(tk.END)
     mini_chat_text.config(state=tk.DISABLED)
 
+
 # -----------------------------------------------
 # Phần bổ sung: Hàm tiền xử lý ảnh và OCR với log chi tiết
 from PIL import Image, ImageEnhance, ImageFilter
 
+
 def preprocess_image(image):
     print("Consolog: Bắt đầu tiền xử lý ảnh cho OCR.")
     print(f"Consolog: Ảnh đầu vào - kích thước: {image.size}, chế độ: {image.mode}")
-    
+
     # ✅ 1. Resize ảnh lên x2 trước khi xử lý (resize càng sớm càng tốt)
     image = image.resize((image.width * 4, image.height * 4), Image.LANCZOS)
     print(f"Consolog: Đã phóng to ảnh lên kích thước: {image.size}")
-    
+
     # Chuyển ảnh về dạng grayscale
-    image = image.convert('L')
+    image = image.convert("L")
     print("Consolog: Đã chuyển ảnh sang grayscale.")
-    
+
     # ✅ 2. Tăng độ nét: sử dụng bộ lọc SHARPEN (nếu cần mạnh hơn có thể dùng UnsharpMask)
     image = image.filter(ImageFilter.SHARPEN)
     print("Consolog: Đã áp dụng bộ lọc SHARPEN để tăng độ nét.")
-    
+
     # ✅ 3. Tăng contrast nhẹ: sử dụng hệ số 1.8 để làm chữ nổi bật
     enhancer = ImageEnhance.Contrast(image)
     image = enhancer.enhance(1.8)
     print("Consolog: Đã tăng độ tương phản của ảnh.")
-    
+
     # ✅ 4. Không dùng threshold (nhị phân) nếu ảnh đã rõ nét
-    print(f"Consolog: Ảnh sau tiền xử lý - kích thước: {image.size}, chế độ: {image.mode}")
+    print(
+        f"Consolog: Ảnh sau tiền xử lý - kích thước: {image.size}, chế độ: {image.mode}"
+    )
     return image
+
 
 def perform_ocr(image, lang="eng+chi_sim+chi_tra"):
     print("Consolog: Bắt đầu thực hiện OCR với ngôn ngữ: " + lang)
     print(f"Consolog: Kích thước ảnh đầu vào: {image.size}, chế độ ảnh: {image.mode}")
-    
+
     # Tiền xử lý ảnh để cải thiện kết quả OCR
     processed_image = preprocess_image(image)
-    
+
     # Bổ sung log: Lưu ảnh sau tiền xử lý để debug
     processed_image.save("debug_ocr.png")
     print("Consolog: Đã lưu ảnh sau tiền xử lý thành debug_ocr.png")
-    
-    custom_config = "--psm 6"  # Cấu hình tùy chỉnh cho OCR (có thể điều chỉnh theo bố cục văn bản)
+
+    custom_config = (
+        "--psm 6"  # Cấu hình tùy chỉnh cho OCR (có thể điều chỉnh theo bố cục văn bản)
+    )
     print("Consolog: Đang thực hiện OCR với cấu hình: " + custom_config)
-    
-    ocr_text = pytesseract.image_to_string(processed_image, lang=lang, config=custom_config)
+
+    ocr_text = pytesseract.image_to_string(
+        processed_image, lang=lang, config=custom_config
+    )
     print("Consolog: Kết quả OCR thô: " + ocr_text)
     return ocr_text
+
+
 # -----------------------------------------------
 
-def translate_text_via_chatgpt(text, source_lang="auto", target_lang="en", conversation_context=""):
+
+def translate_text_via_chatgpt(
+    text, source_lang="auto", target_lang="en", conversation_context=""
+):
     global CHATGPT_API_KEY
     if not CHATGPT_API_KEY:
         append_mini_chat("Mini Chat [ERROR]: ChatGPT API key not set.")
@@ -349,9 +388,9 @@ def translate_text_via_chatgpt(text, source_lang="auto", target_lang="en", conve
         lang_map = {
             "vi": "tiếng Việt",
             "en": "tiếng Anh",
-            "zh": "tiếng Trung",   # Consolog: Thêm mapping cho tiếng Trung
-            "km": "tiếng Khmer",   # Consolog: Thêm mapping cho tiếng Cambodia (Khmer)
-            "pt": "tiếng Bồ Đào Nha"  # Consolog [CHANGED-BRAZIL]: Thêm mapping cho ngôn ngữ Brazil
+            "zh": "tiếng Trung",  # Consolog: Thêm mapping cho tiếng Trung
+            "km": "tiếng Khmer",  # Consolog: Thêm mapping cho tiếng Cambodia (Khmer)
+            "pt": "tiếng Bồ Đào Nha",  # Consolog [CHANGED-BRAZIL]: Thêm mapping cho ngôn ngữ Brazil
         }
         # Dùng mapping nếu có, ngược lại giữ nguyên giá trị target_lang
         lang_name = lang_map.get(target_lang.lower(), target_lang)
@@ -371,8 +410,9 @@ def translate_text_via_chatgpt(text, source_lang="auto", target_lang="en", conve
             f"Chỉ in kết quả cuối cùng là văn bản đã chuyển ngữ."
         )
 
-
-        print("Consolog: Đã cập nhật prompt dịch theo yêu cầu mới (bao gồm chỉ dẫn xử lý câu lóng và địa phương):")
+        print(
+            "Consolog: Đã cập nhật prompt dịch theo yêu cầu mới (bao gồm chỉ dẫn xử lý câu lóng và địa phương):"
+        )
         print(prompt)
 
         # Consolog: [CHANGED] Sử dụng mô hình ChatGPT 4o thay vì gpt-3.5-turbo
@@ -384,24 +424,32 @@ def translate_text_via_chatgpt(text, source_lang="auto", target_lang="en", conve
         )
 
         # Truy xuất nội dung từ phản hồi ChatGPT
-        full_reply = response['choices'][0]['message']['content'].strip()
+        full_reply = response["choices"][0]["message"]["content"].strip()
         print(f"Consolog: Kết quả dịch thô từ ChatGPT: {full_reply}")
 
         detected_lang = None
 
         # Loại bỏ các dòng chỉ dẫn không cần thiết nếu có
-        new_full_reply = re.sub(r"^(Chuyển\s+ngữ\s+sang\s+.+?:\s*)", "", full_reply, flags=re.IGNORECASE)
+        new_full_reply = re.sub(
+            r"^(Chuyển\s+ngữ\s+sang\s+.+?:\s*)", "", full_reply, flags=re.IGNORECASE
+        )
         if new_full_reply != full_reply:
             print("Consolog: Đã loại bỏ dòng thừa từ phản hồi ChatGPT.")
             full_reply = new_full_reply
 
         # Sử dụng regex để tìm header [Ngôn ngữ: ...] hoặc [Language: ...]
-        matches = list(re.finditer(r"\[(?:Ngôn\s*ngữ|Language):\s*(.*?)\]", full_reply, re.IGNORECASE))
+        matches = list(
+            re.finditer(
+                r"\[(?:Ngôn\s*ngữ|Language):\s*(.*?)\]", full_reply, re.IGNORECASE
+            )
+        )
         if matches:
             detected_lang = matches[-1].group(1).strip()
             # Loại bỏ header, chỉ lấy nội dung sau header cuối cùng
-            translated_text = full_reply[matches[-1].end():].strip()
-            print(f"Consolog: Phát hiện header ngôn ngữ, loại bỏ: {matches[-1].group(0)}")
+            translated_text = full_reply[matches[-1].end() :].strip()
+            print(
+                f"Consolog: Phát hiện header ngôn ngữ, loại bỏ: {matches[-1].group(0)}"
+            )
         else:
             translated_text = full_reply.strip()
             print("Consolog: Không phát hiện header ngôn ngữ trong phản hồi ChatGPT.")
@@ -416,6 +464,7 @@ def translate_text_via_chatgpt(text, source_lang="auto", target_lang="en", conve
     except Exception as e:
         append_mini_chat(f"Mini Chat [ERROR]: Translation error: {e}")
         return text, None
+
 
 def send_message_to_telegram_input(hwnd, message):
     # Consolog [CHANGED]: Tin nhắn gửi vào Telegram là message đã được dịch, không có thêm bất kỳ nội dung phụ nào.
@@ -459,6 +508,7 @@ def send_message_to_telegram_input(hwnd, message):
     ctypes.windll.user32.keybd_event(VK_RETURN, 0, 2, 0)
     time.sleep(0.1)
 
+
 # =============================================================================
 # [CHANGED]: BỎ HÀM get_active_telegram_hwnd() cũ và thay thế bằng hàm get_correct_telegram_hwnd()
 # =============================================================================
@@ -476,25 +526,36 @@ def get_correct_telegram_hwnd():
     try:
         proc = psutil.Process(pid.value)
         if proc.name().lower() == "telegram.exe":
-            if not user32.IsIconic(hwnd_fore):  # Consolog [ADDED]: Kiểm tra cửa sổ không bị thu nhỏ
+            if not user32.IsIconic(
+                hwnd_fore
+            ):  # Consolog [ADDED]: Kiểm tra cửa sổ không bị thu nhỏ
                 last_valid_telegram_hwnd = hwnd_fore
-                print(f"Consolog [INFO]: Active Telegram HWND từ foreground (không bị thu nhỏ): {hwnd_fore}")
+                print(
+                    f"Consolog [INFO]: Active Telegram HWND từ foreground (không bị thu nhỏ): {hwnd_fore}"
+                )
                 return hwnd_fore
             else:
                 print("Consolog: Cửa sổ foreground Telegram đang thu nhỏ.")
     except Exception as e:
         print(f"Consolog [ERROR]: Lỗi kiểm tra cửa sổ foreground Telegram: {e}")
-    
-    if last_valid_telegram_hwnd is not None and not user32.IsIconic(last_valid_telegram_hwnd):
-        print(f"Consolog [INFO]: Sử dụng last_valid_telegram_hwnd: {last_valid_telegram_hwnd}")
+
+    if last_valid_telegram_hwnd is not None and not user32.IsIconic(
+        last_valid_telegram_hwnd
+    ):
+        print(
+            f"Consolog [INFO]: Sử dụng last_valid_telegram_hwnd: {last_valid_telegram_hwnd}"
+        )
         return last_valid_telegram_hwnd
-    
+
     # Nếu không có HWND hợp lệ, dùng EnumWindows để quét
     hwnd_result = None
     EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.c_int)
+
     def enum_windows_proc(hwnd, lParam):
         nonlocal hwnd_result
-        if user32.IsWindowVisible(hwnd) and not user32.IsIconic(hwnd):  # Consolog [ADDED]: Bỏ qua các cửa sổ thu nhỏ
+        if user32.IsWindowVisible(hwnd) and not user32.IsIconic(
+            hwnd
+        ):  # Consolog [ADDED]: Bỏ qua các cửa sổ thu nhỏ
             length = user32.GetWindowTextLengthW(hwnd)
             buff = ctypes.create_unicode_buffer(length + 1)
             user32.GetWindowTextW(hwnd, buff, length + 1)
@@ -506,19 +567,24 @@ def get_correct_telegram_hwnd():
                 if proc.name().lower() == "telegram.exe":
                     hwnd_result = hwnd
                     last_valid_telegram_hwnd = hwnd  # Cập nhật last_valid_telegram_hwnd
-                    print(f"Consolog [INFO]: Tìm thấy cửa sổ Telegram (không thu nhỏ) với tiêu đề: {title}, PID={pid_local.value}")
+                    print(
+                        f"Consolog [INFO]: Tìm thấy cửa sổ Telegram (không thu nhỏ) với tiêu đề: {title}, PID={pid_local.value}"
+                    )
                     return False  # Dừng quét sau khi tìm được cửa sổ phù hợp
             except Exception as e:
                 print(f"Consolog [ERROR]: Lỗi lấy thông tin tiến trình: {e}")
         return True
+
     enum_proc_c = EnumWindowsProc(enum_windows_proc)
     user32.EnumWindows(enum_proc_c, 0)
     print(f"Consolog [INFO]: Correct Telegram HWND được lấy (sau enum): {hwnd_result}")
     return hwnd_result
 
+
 # =============================================================================
 # Các chỗ gọi get_active_telegram_hwnd() đã được thay thế bằng get_correct_telegram_hwnd()
 # =============================================================================
+
 
 def detect_language_by_hwnd(hwnd):
     # Chụp ảnh cửa sổ => OCR => detect => trả về
@@ -530,27 +596,36 @@ def detect_language_by_hwnd(hwnd):
         text = perform_ocr(image, lang=ocr_lang)
         if text.strip():
             detected_lang = detect(text)
-            print(f"Consolog: Đã phát hiện ngôn ngữ của đối phương HWND={hwnd}: {detected_lang}")
+            print(
+                f"Consolog: Đã phát hiện ngôn ngữ của đối phương HWND={hwnd}: {detected_lang}"
+            )
             return detected_lang
         else:
-            print(f"Consolog: Không phát hiện nội dung từ HWND={hwnd}, dùng mặc định {DEFAULT_TARGET_LANG}")
+            print(
+                f"Consolog: Không phát hiện nội dung từ HWND={hwnd}, dùng mặc định {DEFAULT_TARGET_LANG}"
+            )
             return DEFAULT_TARGET_LANG
     except Exception as e:
         print(f"Consolog [ERROR]: Lỗi detect lang HWND={hwnd}: {e}")
         return DEFAULT_TARGET_LANG
 
+
 def capture_window(hwnd):
     # Consolog: Kiểm tra cấu hình DPI trước khi gọi SetProcessDPIAware
     if DPI_ENABLED:
         ctypes.windll.user32.SetProcessDPIAware()
-        print("Consolog: DPI_ENABLED=True, đã gọi SetProcessDPIAware để đảm bảo đo theo DPI chính xác.")
+        print(
+            "Consolog: DPI_ENABLED=True, đã gọi SetProcessDPIAware để đảm bảo đo theo DPI chính xác."
+        )
     else:
         print("Consolog: DPI_ENABLED=False, bỏ qua gọi SetProcessDPIAware.")
-    
+
     # Consolog: Dùng ShowWindow để đảm bảo cửa sổ không bị thu nhỏ, kích thước ảnh sẽ đúng kích thước HWND.
     user32.ShowWindow(hwnd, 9)  # SW_RESTORE
     time.sleep(0.2)
-    print("Consolog: Đã gọi ShowWindow(SW_RESTORE) để đảm bảo cửa sổ hiển thị đầy đủ trước khi chụp.")
+    print(
+        "Consolog: Đã gọi ShowWindow(SW_RESTORE) để đảm bảo cửa sổ hiển thị đầy đủ trước khi chụp."
+    )
 
     gdi32 = ctypes.windll.gdi32
     rect = ctypes.wintypes.RECT()
@@ -567,8 +642,10 @@ def capture_window(hwnd):
     print("Consolog: Đang gọi PrintWindow với flag 0 để capture toàn bộ cửa sổ.")
     result = user32.PrintWindow(hwnd, srcdc, 0)
     if result != 1:
-        print("Consolog [WARNING]: PrintWindow không thành công hoặc chỉ chụp được 1 phần.")
-    
+        print(
+            "Consolog [WARNING]: PrintWindow không thành công hoặc chỉ chụp được 1 phần."
+        )
+
     class BITMAPINFOHEADER(ctypes.Structure):
         _fields_ = [
             ("biSize", ctypes.c_uint32),
@@ -597,22 +674,32 @@ def capture_window(hwnd):
     _ = gdi32.GetDIBits(srcdc, bmp, 0, height, buffer, ctypes.byref(bmi), 0)
 
     from PIL import Image
-    image = Image.frombuffer('RGBA', (width, height), buffer, 'raw', 'BGRA', 0, 1)
+
+    image = Image.frombuffer("RGBA", (width, height), buffer, "raw", "BGRA", 0, 1)
     img_width, img_height = image.size
     if img_width != width or img_height != height:
-        print(f"Consolog: Cảnh báo! Kích thước ảnh chụp ({img_width}x{img_height}) không khớp với kích thước HWND ({width}x{height}).")
-        print("Consolog: Thực hiện fallback capture với ImageGrab dựa vào tọa độ cửa sổ.")
+        print(
+            f"Consolog: Cảnh báo! Kích thước ảnh chụp ({img_width}x{img_height}) không khớp với kích thước HWND ({width}x{height})."
+        )
+        print(
+            "Consolog: Thực hiện fallback capture với ImageGrab dựa vào tọa độ cửa sổ."
+        )
         # Giải phóng các đối tượng đã sử dụng
         gdi32.DeleteObject(bmp)
         gdi32.DeleteDC(srcdc)
         user32.ReleaseDC(hwnd, hwindc)
         from PIL import ImageGrab
+
         image = ImageGrab.grab(bbox=(rect.left, rect.top, rect.right, rect.bottom))
         img_width, img_height = image.size
         if img_width != width or img_height != height:
-            print(f"Consolog [ERROR]: Fallback capture cũng không thành công, kích thước ảnh chụp: {img_width}x{img_height}")
+            print(
+                f"Consolog [ERROR]: Fallback capture cũng không thành công, kích thước ảnh chụp: {img_width}x{img_height}"
+            )
         else:
-            print("Consolog: Fallback capture thành công, kích thước ảnh chụp khớp với kích thước HWND.")
+            print(
+                "Consolog: Fallback capture thành công, kích thước ảnh chụp khớp với kích thước HWND."
+            )
     else:
         print("Consolog: Kích thước ảnh chụp khớp với kích thước HWND.")
         gdi32.DeleteObject(bmp)
@@ -620,6 +707,7 @@ def capture_window(hwnd):
         user32.ReleaseDC(hwnd, hwindc)
 
     return image
+
 
 def send_mini_chat_message():
     global mini_chat_entry, mini_chat_text, hwnd_target_lang, TARGET_LANG_SELECTION, mini_chat_paused, mini_chat_last_active_time
@@ -646,23 +734,31 @@ def send_mini_chat_message():
     # [CHANGED]: Sử dụng get_correct_telegram_hwnd() thay cho get_active_telegram_hwnd()
     hwnd = get_correct_telegram_hwnd()
     if hwnd is None:
-        append_mini_chat("Mini Chat [ERROR]: Không tìm thấy cửa sổ Telegram đang active.")
+        append_mini_chat(
+            "Mini Chat [ERROR]: Không tìm thấy cửa sổ Telegram đang active."
+        )
         return
 
     # Consolog: Kiểm tra và đảm bảo đã xác định ngôn ngữ cho HWND trước khi dịch tin nhắn
     target_lang = hwnd_target_lang.get(hwnd)
     if not target_lang:
-        print("Consolog: Chưa có ngôn ngữ xác định cho HWND, sử dụng ngôn ngữ được chọn từ menu.")
+        print(
+            "Consolog: Chưa có ngôn ngữ xác định cho HWND, sử dụng ngôn ngữ được chọn từ menu."
+        )
         target_lang = TARGET_LANG_SELECTION
         hwnd_target_lang[hwnd] = TARGET_LANG_SELECTION
 
-    # Consolog: Sử dụng ngôn ngữ của đối phương từ menu cho tin nhắn chat gửi vào Telegram: 
-    print(f"Consolog: Sử dụng ngôn ngữ của đối phương từ menu: {TARGET_LANG_SELECTION} cho tin nhắn chat gửi vào Telegram.")
-    
+    # Consolog: Sử dụng ngôn ngữ của đối phương từ menu cho tin nhắn chat gửi vào Telegram:
+    print(
+        f"Consolog: Sử dụng ngôn ngữ của đối phương từ menu: {TARGET_LANG_SELECTION} cho tin nhắn chat gửi vào Telegram."
+    )
+
     # Consolog: Đã xác định ngôn ngữ cho HWND, tiến hành dịch tin nhắn theo ngôn ngữ đó.
-    translated, detected = translate_text_via_chatgpt(msg, source_lang="auto", target_lang=target_lang)
+    translated, detected = translate_text_via_chatgpt(
+        msg, source_lang="auto", target_lang=target_lang
+    )
     # Consolog [CHANGED]: Luôn giữ nguyên ngôn ngữ được chọn từ config, không cập nhật theo kết quả detected từ ChatGPT.
-    
+
     # Consolog: Ghi log tin nhắn đã dịch vào Mini Chat (chỉ nội dung dịch)
     append_mini_chat(translated)
 
@@ -677,9 +773,12 @@ def send_mini_chat_message():
             mini_chat_win.lift()
         if mini_chat_entry:
             mini_chat_entry.focus_force()
-        print("Consolog: Focus đã được đặt lại vào ô mini chat sau khi gửi tin thành công.")
+        print(
+            "Consolog: Focus đã được đặt lại vào ô mini chat sau khi gửi tin thành công."
+        )
     except Exception as e:
         append_mini_chat(f"Mini Chat [ERROR]: Lỗi gửi tin nhắn: {e}")
+
 
 def mini_chat_monitor():
     """
@@ -693,7 +792,9 @@ def mini_chat_monitor():
     while True:
         # Consolog: Kiểm tra trạng thái tạm dừng của mini chat để tiết kiệm chi phí ChatGPT API (chỉ ảnh hưởng đến dịch incoming)
         if mini_chat_paused:
-            print("Consolog: Mini Chat đang tạm dừng, bỏ qua việc quét cửa sổ Telegram.")
+            print(
+                "Consolog: Mini Chat đang tạm dừng, bỏ qua việc quét cửa sổ Telegram."
+            )
             time.sleep(3)
             continue
 
@@ -720,23 +821,30 @@ def mini_chat_monitor():
         if prev_image is not None:
             from skimage.metrics import structural_similarity as ssim
             import numpy as np
+
             # Chuyển đổi ảnh sang grayscale và chuyển về mảng numpy
-            img1 = np.array(prev_image.convert('L'))
-            img2 = np.array(img.convert('L'))
+            img1 = np.array(prev_image.convert("L"))
+            img2 = np.array(img.convert("L"))
             # Kiểm tra kích thước của hai ảnh
             if img1.shape != img2.shape:
-                print(f"Consolog: Kích thước ảnh cũ {img1.shape} không khớp với ảnh mới {img2.shape}, coi là thay đổi.")
+                print(
+                    f"Consolog: Kích thước ảnh cũ {img1.shape} không khớp với ảnh mới {img2.shape}, coi là thay đổi."
+                )
                 score = 0
             else:
                 score, _ = ssim(img1, img2, full=True)
                 print(f"Consolog: SSIM score cho HWND {hwnd_fore}: {score}")
             if score >= 0.99:  # Ngưỡng có thể điều chỉnh
-                print(f"Consolog: Không có thay đổi đáng kể (SSIM >= 0.99) cho HWND {hwnd_fore}, bỏ qua dịch.")
+                print(
+                    f"Consolog: Không có thay đổi đáng kể (SSIM >= 0.99) cho HWND {hwnd_fore}, bỏ qua dịch."
+                )
                 continue
 
         # Cập nhật ảnh mới vào dictionary
         screenshot_images[hwnd_fore] = img
-        print(f"Consolog: Ảnh mới cho HWND {hwnd_fore} phát hiện, tiến hành OCR và dịch.")
+        print(
+            f"Consolog: Ảnh mới cho HWND {hwnd_fore} phát hiện, tiến hành OCR và dịch."
+        )
         filename = os.path.join(TEMP_FOLDER, f"{hwnd_fore}_screenshot.png")
         img.save(filename)
 
@@ -754,38 +862,53 @@ def mini_chat_monitor():
 
         prev_ocr = translation_logs.get(hwnd_fore, {}).get("ocr")
         if prev_ocr and prev_ocr.strip() == ocr_text.strip():
-            print(f"Consolog: Nội dung OCR cho HWND {hwnd_fore} không thay đổi, bỏ qua dịch.")
+            print(
+                f"Consolog: Nội dung OCR cho HWND {hwnd_fore} không thay đổi, bỏ qua dịch."
+            )
             continue
 
         # Consolog: Dùng ngôn ngữ của tôi (MY_LANG_SELECTION) làm target cho dịch tin nhắn đến tôi từ OCR
-        print(f"Consolog: Sử dụng ngôn ngữ của tôi từ menu: {MY_LANG_SELECTION} cho bản dịch tin nhắn đến từ OCR.")
+        print(
+            f"Consolog: Sử dụng ngôn ngữ của tôi từ menu: {MY_LANG_SELECTION} cho bản dịch tin nhắn đến từ OCR."
+        )
         translation, detected = translate_text_via_chatgpt(
             ocr_text,
             source_lang="auto",
             target_lang=MY_LANG_SELECTION,
-            conversation_context="Conversation transcript translation"
+            conversation_context="Conversation transcript translation",
         )
-        
+
         translation_logs[hwnd_fore] = {"ocr": ocr_text, "translation": translation}
-        print("Consolog: Đang đẩy nội dung dịch đã được làm sạch vào mini chat (không thêm chú thích).")
+        print(
+            "Consolog: Đang đẩy nội dung dịch đã được làm sạch vào mini chat (không thêm chú thích)."
+        )
         append_mini_chat(translation)
+
 
 def start_mini_chat_monitor():
     t = threading.Thread(target=mini_chat_monitor, daemon=True)
     t.start()
+
 
 # Consolog: [ADDED - INACTIVITY]: Hàm giám sát thời gian inactivity của mini chat
 def mini_chat_inactivity_monitor():
     global mini_chat_last_active_time, mini_chat_paused
     while True:
         # Chỉ áp dụng cho mini chat; widget mini chatgpt không ảnh hưởng tới biến này
-        if not mini_chat_paused and (time.time() - mini_chat_last_active_time) >= 180:  # 180 giây = 3 phút
+        if (
+            not mini_chat_paused and (time.time() - mini_chat_last_active_time) >= 180
+        ):  # 180 giây = 3 phút
             mini_chat_paused = True
             if mini_chat_pause_button:
                 mini_chat_pause_button.config(text="Resume")
-            append_mini_chat("Mini Chat paused do 3 phút inactivity để tiết kiệm API tokens.")
-            print("Consolog: Mini Chat paused tự động do không có hoạt động trong 3 phút.")
+            append_mini_chat(
+                "Mini Chat paused do 3 phút inactivity để tiết kiệm API tokens."
+            )
+            print(
+                "Consolog: Mini Chat paused tự động do không có hoạt động trong 3 phút."
+            )
         time.sleep(1)
+
 
 # Consolog: Hàm lưu cài đặt ngôn ngữ và DPI vào file config (ví dụ: config.ini)
 def save_config():
@@ -796,16 +919,19 @@ def save_config():
             f.write(f"TARGET_LANG_SELECTION={TARGET_LANG_SELECTION}\n")
             f.write(f"DPI_ENABLED={DPI_ENABLED}\n")
         print("Consolog: Đã lưu cài đặt ngôn ngữ và DPI vào file config.ini")
-        
+
         # Consolog: Cập nhật ngay lập tức cấu hình ngôn ngữ cho các cửa sổ chat hiện tại
         for hwnd in list(hwnd_target_lang.keys()):
             hwnd_target_lang[hwnd] = TARGET_LANG_SELECTION
-            print(f"Consolog: Cập nhật ngôn ngữ đối phương cho HWND {hwnd} thành {TARGET_LANG_SELECTION} ngay sau khi lưu.")
-        
+            print(
+                f"Consolog: Cập nhật ngôn ngữ đối phương cho HWND {hwnd} thành {TARGET_LANG_SELECTION} ngay sau khi lưu."
+            )
+
         append_mini_chat("Cài đặt ngôn ngữ và DPI đã được lưu.")
     except Exception as e:
         print(f"Consolog [ERROR]: Lỗi lưu cài đặt config: {e}")
         append_mini_chat("Mini Chat [ERROR]: Lỗi lưu cài đặt config.")
+
 
 # Consolog: Bổ sung hàm destroy_mini_chat() để đóng cửa sổ mini chat
 def destroy_mini_chat():
@@ -815,12 +941,14 @@ def destroy_mini_chat():
         mini_chat_win = None
         print("Consolog: Mini chat window has been destroyed.")
 
+
 ###############################################
 # PHẦN BỔ SUNG: Widget MINI CHATGPT (TÁCH RIÊNG)
 ###############################################
 
 # Import ctypes.wintypes để định nghĩa cấu trúc WINDOWPLACEMENT
 import ctypes.wintypes
+
 
 # Định nghĩa cấu trúc WINDOWPLACEMENT để lấy thông tin vị trí cửa sổ "bình thường"
 class WINDOWPLACEMENT(ctypes.Structure):
@@ -838,12 +966,16 @@ class WINDOWPLACEMENT(ctypes.Structure):
 """Tạo widget mini chatgpt với kích thước bằng ô input của mini chat, bao gồm nút Send, Zoom và Quit.
     Widget này luôn ở “đít” (bottom) của cửa sổ Telegram, tự động cập nhật vị trí khi cửa sổ di chuyển.
     """
+
+
 def create_mini_chatgpt():
     global mini_chatgpt_win, mini_chatgpt_entry, mini_chatgpt_pause_button
     global target_lang_display_var  # <-- thêm biến chung
 
     if root is None:
-        print("Consolog [ERROR]: root chưa được set. Gọi set_root(root) trước khi tạo widget mini chatgpt.")
+        print(
+            "Consolog [ERROR]: root chưa được set. Gọi set_root(root) trước khi tạo widget mini chatgpt."
+        )
         return
 
     mini_chatgpt_win = tk.Toplevel(root)
@@ -858,7 +990,9 @@ def create_mini_chatgpt():
     tele_y = root.winfo_rooty()  # cách mép trên của Telegram 1px
     mini_chatgpt_win.geometry(f"{widget_width}x{widget_height}+{tele_x}+{tele_y}")
     mini_chatgpt_win.withdraw()
-    print("Consolog: Widget mini chatgpt được khởi tạo và ẩn do chưa phát hiện được HWND của Telegram.")
+    print(
+        "Consolog: Widget mini chatgpt được khởi tạo và ẩn do chưa phát hiện được HWND của Telegram."
+    )
 
     frame = tk.Frame(mini_chatgpt_win)
     frame.pack(fill=tk.BOTH, expand=True)
@@ -866,16 +1000,18 @@ def create_mini_chatgpt():
     # --- Entry và các nút Send / Zoom / Quit như trước ---
     mini_chatgpt_entry = tk.Entry(frame)
     mini_chatgpt_entry.grid(
-        row=0, column=0, sticky="we",
-        padx=4, pady=4, ipady=3  # tăng chiều cao thêm ~6px, padding mỗi bên 4px
+        row=0,
+        column=0,
+        sticky="we",
+        padx=4,
+        pady=4,
+        ipady=3,  # tăng chiều cao thêm ~6px, padding mỗi bên 4px
     )
-    mini_chatgpt_entry.config(
-        bd=1, relief="solid", font=("Segoe UI", 10)
-    )
+    mini_chatgpt_entry.config(bd=1, relief="solid", font=("Segoe UI", 10))
     frame.columnconfigure(0, weight=1)
     mini_chatgpt_entry.bind("<Return>", lambda e: send_mini_chatgpt_message())
 
-# --- Bổ sung dropdown Target Language ---
+    # --- Bổ sung dropdown Target Language ---
     def on_target_lang_select(chosen_name):
         global TARGET_LANG_SELECTION
         TARGET_LANG_SELECTION = NAME_TO_LANG_CODE[chosen_name]
@@ -885,18 +1021,14 @@ def create_mini_chatgpt():
         frame,
         target_lang_display_var,
         *LANG_CODE_TO_NAME.values(),
-        command=on_target_lang_select
+        command=on_target_lang_select,
     )
     target_lang_menu.grid(row=0, column=1, padx=4, pady=4)
-    target_lang_menu.config(
-        font=("Segoe UI", 9), bd=1, relief="solid"
-    )
+    target_lang_menu.config(font=("Segoe UI", 9), bd=1, relief="solid")
 
     btn_send = tk.Button(frame, text="Send", command=send_mini_chatgpt_message)
     btn_send.grid(row=0, column=2, padx=4, pady=4)
-    btn_send.config(
-        bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
-    )
+    btn_send.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4)
 
     # btn_zoom = tk.Button(frame, text="Zoom", command=toggle_mini_chat_zoom)
     # btn_zoom.grid(row=0, column=3, padx=4, pady=4)
@@ -907,16 +1039,15 @@ def create_mini_chatgpt():
 
     btn_quit = tk.Button(frame, text="x", command=destroy_mini_chatgpt)
     btn_quit.grid(row=0, column=4, padx=4, pady=4)
-    btn_quit.config(
-        bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
+    btn_quit.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4)
+
+    print(
+        "Consolog: Đã tạo widget mini chatgpt với nút Send, Zoom, Quit và dropdown Target Language."
     )
-
-    
-
-    print("Consolog: Đã tạo widget mini chatgpt với nút Send, Zoom, Quit và dropdown Target Language.")
 
     # Bắt đầu thread cập nhật vị trí để bám sát cửa sổ Telegram
     threading.Thread(target=update_mini_chatgpt_position, daemon=True).start()
+
 
 def send_mini_chatgpt_message():
     """Xử lý gửi tin từ widget mini chatgpt.
@@ -941,7 +1072,9 @@ def send_mini_chatgpt_message():
 
     hwnd = get_correct_telegram_hwnd()
     if hwnd is None:
-        print("Consolog [ERROR]: Widget mini chatgpt không tìm thấy cửa sổ Telegram đang active.")
+        print(
+            "Consolog [ERROR]: Widget mini chatgpt không tìm thấy cửa sổ Telegram đang active."
+        )
         return
 
     # đảm bảo target_lang mặc định là 'en' nếu chưa có giá trị
@@ -949,14 +1082,18 @@ def send_mini_chatgpt_message():
     target_lang = hwnd_target_lang.get(hwnd, default_target)
     print(f"Consolog: [mini chatgpt] Sử dụng ngôn ngữ đối phương: {target_lang}")
 
-    translated, _ = translate_text_via_chatgpt(msg, source_lang="auto", target_lang=target_lang)
+    translated, _ = translate_text_via_chatgpt(
+        msg, source_lang="auto", target_lang=target_lang
+    )
     print("Consolog: [mini chatgpt] Tin nhắn sau dịch: " + translated)
 
     try:
         send_message_to_telegram_input(hwnd, translated)
         print("Consolog: [mini chatgpt] Tin nhắn đã được gửi vào Telegram.")
         mini_chatgpt_entry.focus_force()
-        print("Consolog: Focus đã được đặt lại vào ô chat của widget mini chatgpt sau khi gửi tin.")
+        print(
+            "Consolog: Focus đã được đặt lại vào ô chat của widget mini chatgpt sau khi gửi tin."
+        )
     except Exception as e:
         print("Consolog [ERROR]: Widget mini chatgpt gặp lỗi khi gửi tin: " + str(e))
 
@@ -974,22 +1111,17 @@ def destroy_mini_chatgpt():
     destroy_mini_chat()
     # Đặt cờ để dừng thread của widget mini chatgpt
     widget_mini_chat_thread_running = False
-    print("Consolog: Đã đặt widget_mini_chat_thread_running = False để dừng các thread liên quan đến widget mini chat.")
+    print(
+        "Consolog: Đã đặt widget_mini_chat_thread_running = False để dừng các thread liên quan đến widget mini chat."
+    )
     if mini_chatgpt_win is not None:
         mini_chatgpt_win.destroy()
         mini_chatgpt_win = None
         print("Consolog: Widget mini chatgpt đã bị đóng.")
 
+
 def update_mini_chatgpt_position():
-    """
-    Luồng nền cập nhật vị trí của widget mini chatgpt.
-    Mỗi 0.5 giây sẽ quét xem có HWND của cửa sổ Telegram không.
-    Nếu có và cửa sổ không bị thu nhỏ, widget sẽ được đặt theo các quy tắc sau:
-      • Widget được căn chỉnh theo chiều ngang để có cùng chiều rộng với cửa sổ Telegram.
-      • Yêu cầu mới: Widget mini chat cần nằm phía trên đỉnh của cửa sổ Telegram. 
-        Điều này được tính theo tọa độ của cửa sổ Telegram (rect.top), trừ đi chiều cao widget và một margin cố định (1px).
-      • Nếu không thể lấy được cửa sổ Telegram hoặc cửa sổ đang thu nhỏ, widget sẽ được ẩn.
-    """
+
     global mini_chatgpt_win, widget_mini_chat_thread_running
     while mini_chatgpt_win is not None and widget_mini_chat_thread_running:
         mini_chatgpt_win.update_idletasks()
@@ -1004,27 +1136,34 @@ def update_mini_chatgpt_position():
             # Nếu cửa sổ không ở trạng thái bình thường (SW_SHOWNORMAL=1), dùng rcNormalPosition
             if placement.showCmd != 1:
                 rect = placement.rcNormalPosition
-                print("Consolog: Cửa sổ Telegram không ở trạng thái bình thường, sử dụng rcNormalPosition.")
+                print(
+                    "Consolog: Cửa sổ Telegram không ở trạng thái bình thường, sử dụng rcNormalPosition."
+                )
             else:
                 rect = ctypes.wintypes.RECT()
                 user32.GetWindowRect(hwnd, ctypes.byref(rect))
             window_width = rect.right - rect.left
 
-            # Consolog [MODIFIED]: Cập nhật widget có cùng chiều rộng với cửa sổ Telegram và nằm phía trên đỉnh của Telegram.
+            # Consolog [MODIFIED]: Cập nhật widget có cùng chiều rộng với cửa sổ Telegram và nằm phía dưới đáy của Telegram.
             widget_width = window_width  # widget_width bằng chiều rộng của Telegram
             widget_height = 40  # Chiều cao widget cố định
             x = rect.left  # Đặt widget bắt đầu từ mép trái của cửa sổ Telegram
-            # Tính tọa độ y: widget nằm phía trên mép trên của Telegram, cách mép trên của Telegram 10px
-            y = rect.top - widget_height - 1
+            # Tính tọa độ y: widget nằm phía dưới mép dưới của Telegram, cách mép dưới của Telegram 1px
+            y = rect.bottom + 1
             new_geometry = f"{widget_width}x{widget_height}+{x}+{y}"
             mini_chatgpt_win.geometry(new_geometry)
             mini_chatgpt_win.lift()  # Đảm bảo widget luôn nằm trên cùng
-            print(f"Consolog: Updated widget geometry to {new_geometry} attached to HWND {hwnd}. (Widget nằm phía trên đỉnh của Telegram, margin 1px)")
+            print(
+                f"Consolog: Updated widget geometry to {new_geometry} attached to HWND {hwnd}. (Widget nằm phía dưới đáy của Telegram, margin 1px)"
+            )
         else:
             # Nếu không tìm thấy cửa sổ Telegram hợp lệ hoặc cửa sổ đang thu nhỏ, ẩn widget
             mini_chatgpt_win.withdraw()
-            print("Consolog: Không phát hiện HWND Telegram hợp lệ hoặc cửa sổ đang thu nhỏ. Widget mini chatgpt được ẩn.")
+            print(
+                "Consolog: Không phát hiện HWND Telegram hợp lệ hoặc cửa sổ đang thu nhỏ. Widget mini chatgpt được ẩn."
+            )
         time.sleep(0.5)
+
 
 # ========================
 # [ADDED]: Hàm toggle_mini_chat_zoom cho nút Zoom trong widget mini chatgpt
@@ -1052,7 +1191,10 @@ def toggle_mini_chat_zoom():
     x = screen_width - width - 50  # Consolog: Sửa margin từ 10px thành 50px ở bên phải
     y = screen_height - height - 50  # Consolog: Sửa margin từ 10px thành 50px bên dưới
     mini_chat_win.geometry(f"{width}x{height}+{x}+{y}")
-    print("Consolog: Mini chat đã được thay đổi kích thước về kích thước tiêu chuẩn với margin 50px bên phải và dưới màn hình.")
+    print(
+        "Consolog: Mini chat đã được thay đổi kích thước về kích thước tiêu chuẩn với margin 50px bên phải và dưới màn hình."
+    )
+
 
 # ========================
 # KẾT THÚC: Các thay đổi đã bổ sung theo yêu cầu
