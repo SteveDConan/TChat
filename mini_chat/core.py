@@ -72,15 +72,31 @@ print(
 
 # ----- module-level, đặt ngay dưới import tkinter as tk, threading, … -----
 LANG_CODE_TO_NAME = {
-    "en": "English",
-    "vi": "Vietnamese",
+    "en": "English",      
+    "zh": "Chinese", 
+    "vi": "Vietnamese",    
+    "ar": "Arabic-Egypt",      # Egypt
+    "bn": "Bangladesh",        # Bangladesh
+    "pt": "Brazil",            # Brazil
+    "am": "Ethiopia",          # Ethiopia
     "fr": "French",
-    "es": "Spanish",
     "de": "German",
-    "zh": "Chinese",
+    "id": "Indonesian",
     "km": "Khmer",
-    "pt": "Portuguese",
+    "es": "Spanish-Mexico",    # Mexico
+    "tl": "Philippines",       # Philippines
+    "yo": "Nigeria",           # Nigeria (local)
 }
+# LANG_CODE_TO_NAME = {
+#     "en": "English",
+#     "vi": "Vietnamese",
+#     "fr": "French",
+#     "es": "Spanish",
+#     "de": "German",
+#     "zh": "Chinese",
+#     "km": "Khmer",
+#     "pt": "Portuguese",
+# }
 NAME_TO_LANG_CODE = {name: code for code, name in LANG_CODE_TO_NAME.items()}
 
 # Shared StringVar cho cả hai widget
@@ -392,9 +408,16 @@ def translate_text_via_chatgpt(
         lang_map = {
             "vi": "tiếng Việt",
             "en": "tiếng Anh",
-            "zh": "tiếng Trung",  # Consolog: Thêm mapping cho tiếng Trung
-            "km": "tiếng Khmer",  # Consolog: Thêm mapping cho tiếng Cambodia (Khmer)
-            "pt": "tiếng Bồ Đào Nha",  # Consolog [CHANGED-BRAZIL]: Thêm mapping cho ngôn ngữ Brazil
+            "zh": "tiếng Trung",  # tiếng Trung Quốc
+            "km": "tiếng Khmer",  # tiếng Campuchia (Khmer)
+            "pt": "tiếng Bồ Đào Nha",  # Brazil dùng tiếng Bồ Đào Nha
+            "bn": "tiếng Bengal",  # Bangladesh
+            "tl": "tiếng Tagalog",  # Philippines
+            "am": "tiếng Amhara",  # Ethiopia
+            "ar": "tiếng Ả Rập",  # Egypt
+            "es": "tiếng Tây Ban Nha",  # Mexico
+            "id": "tiếng Indonesia",  # Indonesia
+            "yo": "tiếng Yoruba-Nigeria",       # Nigeria (local)
         }
         # Dùng mapping nếu có, ngược lại giữ nguyên giá trị target_lang
         lang_name = lang_map.get(target_lang.lower(), target_lang)
@@ -982,7 +1005,9 @@ def create_mini_chatgpt():
     global target_lang_display_var  # <-- biến toàn cục hiển thị ngôn ngữ đích
 
     if root is None:
-        print("Consolog [ERROR]: root chưa được set. Gọi set_root(root) trước khi tạo widget mini chatgpt.")
+        print(
+            "Consolog [ERROR]: root chưa được set. Gọi set_root(root) trước khi tạo widget mini chatgpt."
+        )
         return
 
     # --- 1. Tạo cửa sổ toplevel ---
@@ -998,7 +1023,9 @@ def create_mini_chatgpt():
     tele_y = root.winfo_rooty()
     mini_chatgpt_win.geometry(f"{widget_width}x{widget_height}+{tele_x}+{tele_y}")
     mini_chatgpt_win.withdraw()
-    print("Consolog: Widget mini chatgpt được khởi tạo và ẩn do chưa phát hiện được HWND của Telegram.")
+    print(
+        "Consolog: Widget mini chatgpt được khởi tạo và ẩn do chưa phát hiện được HWND của Telegram."
+    )
 
     # --- 2. Frame chứa toàn bộ các widget chức năng ---
     frame = tk.Frame(mini_chatgpt_win)
@@ -1009,7 +1036,7 @@ def create_mini_chatgpt():
         frame,
         vocab_file="mini_chat/vocabs/vocab_all.json",  # Đường dẫn file vocab
         width=290,
-        height=52  # Có thể chỉnh cao bằng chiều cao input cho đẹp hơn
+        height=52,  # Có thể chỉnh cao bằng chiều cao input cho đẹp hơn
     )
     vocab_widget.grid(row=0, column=0, padx=2, pady=2, sticky="nsew")
 
@@ -1060,7 +1087,9 @@ def create_mini_chatgpt():
     # btn_zoom.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4)
     # mini_chatgpt_pause_button = btn_zoom
 
-    print("Consolog: Đã tạo widget mini chatgpt với học từ vựng, ô nhập, dropdown, nút Send, Quit.")
+    print(
+        "Consolog: Đã tạo widget mini chatgpt với học từ vựng, ô nhập, dropdown, nút Send, Quit."
+    )
 
     # --- 8. Tự động cập nhật vị trí widget bám theo cửa sổ Telegram ---
     threading.Thread(target=update_mini_chatgpt_position, daemon=True).start()
