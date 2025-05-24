@@ -923,13 +923,13 @@ def mini_chat_inactivity_monitor():
     while True:
         # Chỉ áp dụng cho mini chat; widget mini chatgpt không ảnh hưởng tới biến này
         if (
-            not mini_chat_paused and (time.time() - mini_chat_last_active_time) >= 180
+            not mini_chat_paused and (time.time() - mini_chat_last_active_time) >= 0
         ):  # 180 giây = 3 phút
             mini_chat_paused = True
             if mini_chat_pause_button:
                 mini_chat_pause_button.config(text="Resume")
             append_mini_chat(
-                "Mini Chat paused do 3 phút inactivity để tiết kiệm API tokens."
+                "Mini Chat paused do 3 phút (current set 0) inactivity để tiết kiệm API tokens."
             )
             print(
                 "Consolog: Mini Chat paused tự động do không có hoạt động trong 3 phút."
