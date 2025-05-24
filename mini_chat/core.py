@@ -1009,7 +1009,7 @@ def create_mini_chatgpt():
         frame,
         vocab_file="mini_chat/vocabs/vocab_all.json",  # Đường dẫn file vocab
         width=290,
-        height=38  # Có thể chỉnh cao bằng chiều cao input cho đẹp hơn
+        height=52  # Có thể chỉnh cao bằng chiều cao input cho đẹp hơn
     )
     vocab_widget.grid(row=0, column=0, padx=2, pady=2, sticky="nsew")
 
@@ -1163,7 +1163,7 @@ def update_mini_chatgpt_position():
 
             # Consolog [MODIFIED]: Cập nhật widget có cùng chiều rộng với cửa sổ Telegram và nằm phía dưới đáy của Telegram.
             widget_width = window_width  # widget_width bằng chiều rộng của Telegram
-            widget_height = 40  # Chiều cao widget cố định
+            widget_height = 52  # Chiều cao widget cố định
             x = rect.left  # Đặt widget bắt đầu từ mép trái của cửa sổ Telegram
             # Tính tọa độ y: widget nằm phía dưới mép dưới của Telegram, cách mép dưới của Telegram 1px
             y = rect.bottom + 1
