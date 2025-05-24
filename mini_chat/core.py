@@ -898,12 +898,12 @@ def create_mini_chatgpt():
         bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
     )
 
-    btn_zoom = tk.Button(frame, text="Zoom", command=toggle_mini_chat_zoom)
-    btn_zoom.grid(row=0, column=3, padx=4, pady=4)
-    btn_zoom.config(
-        bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
-    )
-    mini_chatgpt_pause_button = btn_zoom
+    # btn_zoom = tk.Button(frame, text="Zoom", command=toggle_mini_chat_zoom)
+    # btn_zoom.grid(row=0, column=3, padx=4, pady=4)
+    # btn_zoom.config(
+    #     bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4
+    # )
+    # mini_chatgpt_pause_button = btn_zoom
 
     btn_quit = tk.Button(frame, text="x", command=destroy_mini_chatgpt)
     btn_quit.grid(row=0, column=4, padx=4, pady=4)
@@ -987,7 +987,7 @@ def update_mini_chatgpt_position():
     Nếu có và cửa sổ không bị thu nhỏ, widget sẽ được đặt theo các quy tắc sau:
       • Widget được căn chỉnh theo chiều ngang để có cùng chiều rộng với cửa sổ Telegram.
       • Yêu cầu mới: Widget mini chat cần nằm phía trên đỉnh của cửa sổ Telegram. 
-        Điều này được tính theo tọa độ của cửa sổ Telegram (rect.top), trừ đi chiều cao widget và một margin cố định (10px).
+        Điều này được tính theo tọa độ của cửa sổ Telegram (rect.top), trừ đi chiều cao widget và một margin cố định (1px).
       • Nếu không thể lấy được cửa sổ Telegram hoặc cửa sổ đang thu nhỏ, widget sẽ được ẩn.
     """
     global mini_chatgpt_win, widget_mini_chat_thread_running
@@ -1015,11 +1015,11 @@ def update_mini_chatgpt_position():
             widget_height = 40  # Chiều cao widget cố định
             x = rect.left  # Đặt widget bắt đầu từ mép trái của cửa sổ Telegram
             # Tính tọa độ y: widget nằm phía trên mép trên của Telegram, cách mép trên của Telegram 10px
-            y = rect.top - widget_height - 10
+            y = rect.top - widget_height - 1
             new_geometry = f"{widget_width}x{widget_height}+{x}+{y}"
             mini_chatgpt_win.geometry(new_geometry)
             mini_chatgpt_win.lift()  # Đảm bảo widget luôn nằm trên cùng
-            print(f"Consolog: Updated widget geometry to {new_geometry} attached to HWND {hwnd}. (Widget nằm phía trên đỉnh của Telegram, margin 10px)")
+            print(f"Consolog: Updated widget geometry to {new_geometry} attached to HWND {hwnd}. (Widget nằm phía trên đỉnh của Telegram, margin 1px)")
         else:
             # Nếu không tìm thấy cửa sổ Telegram hợp lệ hoặc cửa sổ đang thu nhỏ, ẩn widget
             mini_chatgpt_win.withdraw()
