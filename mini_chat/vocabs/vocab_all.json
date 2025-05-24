@@ -1,0 +1,616 @@
+{
+  "1": [
+    {
+      "word": "sun",
+      "type": "noun",
+      "meaning": "mặt trời",
+      "example": "The sun rises in the east."
+    }
+  ],
+  "2": [
+    {
+      "word": "jump",
+      "type": "verb",
+      "meaning": "nhảy",
+      "example": "The cat jumps over the wall."
+    }
+  ],
+  "3": [
+    {
+      "word": "happy",
+      "type": "adjective",
+      "meaning": "vui vẻ",
+      "example": "She is happy with her results."
+    }
+  ],
+  "4": [
+    {
+      "word": "quickly",
+      "type": "adverb",
+      "meaning": "nhanh chóng",
+      "example": "He finished his homework quickly."
+    }
+  ],
+  "5": [
+    {
+      "word": "tree",
+      "type": "noun",
+      "meaning": "cây",
+      "example": "There is a big tree in my garden."
+    }
+  ],
+  "6": [
+    {
+      "word": "swim",
+      "type": "verb",
+      "meaning": "bơi",
+      "example": "They swim every morning."
+    }
+  ],
+  "7": [
+    {
+      "word": "strong",
+      "type": "adjective",
+      "meaning": "mạnh mẽ",
+      "example": "He is very strong."
+    }
+  ],
+  "8": [
+    {
+      "word": "slowly",
+      "type": "adverb",
+      "meaning": "chậm chạp",
+      "example": "Please speak slowly."
+    }
+  ],
+  "9": [
+    {
+      "word": "house",
+      "type": "noun",
+      "meaning": "ngôi nhà",
+      "example": "Her house is beautiful."
+    }
+  ],
+  "10": [
+    {
+      "word": "draw",
+      "type": "verb",
+      "meaning": "vẽ",
+      "example": "He likes to draw animals."
+    }
+  ],
+  "11": [
+    {
+      "word": "brave",
+      "type": "adjective",
+      "meaning": "dũng cảm",
+      "example": "The boy is very brave."
+    }
+  ],
+  "12": [
+    {
+      "word": "quietly",
+      "type": "adverb",
+      "meaning": "lặng lẽ",
+      "example": "She left the room quietly."
+    }
+  ],
+  "13": [
+    {
+      "word": "car",
+      "type": "noun",
+      "meaning": "xe ô tô",
+      "example": "My father has a new car."
+    }
+  ],
+  "14": [
+    {
+      "word": "cook",
+      "type": "verb",
+      "meaning": "nấu ăn",
+      "example": "She can cook delicious meals."
+    }
+  ],
+  "15": [
+    {
+      "word": "kind",
+      "type": "adjective",
+      "meaning": "tốt bụng",
+      "example": "He is a kind person."
+    }
+  ],
+  "16": [
+    {
+      "word": "loudly",
+      "type": "adverb",
+      "meaning": "to, ồn ào",
+      "example": "They talked loudly in the hall."
+    }
+  ],
+  "17": [
+    {
+      "word": "mountain",
+      "type": "noun",
+      "meaning": "núi",
+      "example": "The mountain is very high."
+    }
+  ],
+  "18": [
+    {
+      "word": "write",
+      "type": "verb",
+      "meaning": "viết",
+      "example": "Please write your name here."
+    }
+  ],
+  "19": [
+    {
+      "word": "funny",
+      "type": "adjective",
+      "meaning": "hài hước",
+      "example": "That movie is very funny."
+    }
+  ],
+  "20": [
+    {
+      "word": "often",
+      "type": "adverb",
+      "meaning": "thường xuyên",
+      "example": "She often visits her grandmother."
+    }
+  ],
+  "21": [
+    {
+      "word": "school",
+      "type": "noun",
+      "meaning": "trường học",
+      "example": "Our school is near the park."
+    }
+  ],
+  "22": [
+    {
+      "word": "open",
+      "type": "verb",
+      "meaning": "mở",
+      "example": "Can you open the door?"
+    }
+  ],
+  "23": [
+    {
+      "word": "cold",
+      "type": "adjective",
+      "meaning": "lạnh",
+      "example": "It is very cold today."
+    }
+  ],
+  "24": [
+    {
+      "word": "afraid",
+      "type": "adj",
+      "meaning": "sợ hãi",
+      "example": "The woman was afraid of what she saw."
+    },
+    {
+      "word": "agree",
+      "type": "v",
+      "meaning": "đồng ý",
+      "example": "The food is very good in that restaurant. I agree with you."
+    },
+    {
+      "word": "angry",
+      "type": "adj",
+      "meaning": "tức giận",
+      "example": "She didn’t do her homework, so her father was angry."
+    },
+    {
+      "word": "arrive",
+      "type": "v",
+      "meaning": "đến nơi",
+      "example": "They arrived at the airport at 8:00."
+    },
+    {
+      "word": "attack",
+      "type": "v",
+      "meaning": "tấn công",
+      "example": "The man with the sword attacked the other man first."
+    },
+    {
+      "word": "bottom",
+      "type": "n",
+      "meaning": "đáy",
+      "example": "The bottom of my shoe has a hole in it."
+    },
+    {
+      "word": "clever",
+      "type": "adj",
+      "meaning": "thông minh",
+      "example": "The clever boy thought of a good idea."
+    },
+    {
+      "word": "cruel",
+      "type": "adj",
+      "meaning": "độc ác",
+      "example": "The cruel man yelled at his sister."
+    },
+    {
+      "word": "finally",
+      "type": "adv",
+      "meaning": "cuối cùng",
+      "example": "He finally crossed the finish line after five hours of running."
+    },
+    {
+      "word": "hide",
+      "type": "v",
+      "meaning": "trốn, giấu",
+      "example": "The other children will hide while you count to 100."
+    },
+    {
+      "word": "hunt",
+      "type": "v",
+      "meaning": "săn bắn",
+      "example": "Long ago, people had to hunt for food."
+    },
+    {
+      "word": "lot",
+      "type": "n",
+      "meaning": "rất nhiều",
+      "example": "There are a lot of apples in the basket."
+    },
+    {
+      "word": "middle",
+      "type": "n",
+      "meaning": "giữa",
+      "example": "The Canadian flag has a maple leaf in the middle."
+    },
+    {
+      "word": "moment",
+      "type": "n",
+      "meaning": "khoảnh khắc",
+      "example": "I was only a few moments late for the meeting."
+    },
+    {
+      "word": "pleased",
+      "type": "adj",
+      "meaning": "hài lòng",
+      "example": "She was pleased with the phone call she received."
+    },
+    {
+      "word": "promise",
+      "type": "v",
+      "meaning": "hứa",
+      "example": "He promised to return my book."
+    },
+    {
+      "word": "reply",
+      "type": "v",
+      "meaning": "trả lời",
+      "example": "She asked him what time his meeting was. He replied, 'at three.'"
+    },
+    {
+      "word": "safe",
+      "type": "adj",
+      "meaning": "an toàn",
+      "example": "Put on your seat belt to be safe in the car."
+    },
+    {
+      "word": "trick",
+      "type": "n",
+      "meaning": "mẹo, trò lừa",
+      "example": "His card trick really surprised us."
+    },
+    {
+      "word": "well",
+      "type": "adv",
+      "meaning": "tốt",
+      "example": "The couple can dance quite well."
+    },
+    {
+      "word": "adventure",
+      "type": "n",
+      "meaning": "cuộc phiêu lưu",
+      "example": "Riding in the rough water was an adventure."
+    },
+    {
+      "word": "approach",
+      "type": "v",
+      "meaning": "tiến lại gần",
+      "example": "The boy approached his school."
+    },
+    {
+      "word": "carefully",
+      "type": "adv",
+      "meaning": "cẩn thận",
+      "example": "The baby carefully climbed down the stairs."
+    },
+    {
+      "word": "chemical",
+      "type": "n",
+      "meaning": "hóa chất",
+      "example": "The scientist mixed the chemicals."
+    },
+    {
+      "word": "create",
+      "type": "v",
+      "meaning": "tạo ra",
+      "example": "She created an igloo from blocks of snow."
+    },
+    {
+      "word": "evil",
+      "type": "adj",
+      "meaning": "xấu xa",
+      "example": "The evil figure scared us all."
+    },
+    {
+      "word": "experiment",
+      "type": "n",
+      "meaning": "thí nghiệm",
+      "example": "The student did an experiment in science class."
+    },
+    {
+      "word": "kill",
+      "type": "v",
+      "meaning": "giết",
+      "example": "It is against the law to kill another person."
+    },
+    {
+      "word": "laboratory",
+      "type": "n",
+      "meaning": "phòng thí nghiệm",
+      "example": "My mother works in a laboratory."
+    },
+    {
+      "word": "laugh",
+      "type": "v",
+      "meaning": "cười",
+      "example": "The sound of their laugh filled the room."
+    },
+    {
+      "word": "loud",
+      "type": "adj",
+      "meaning": "to, ồn ào",
+      "example": "The man’s voice was so loud that we all could hear him."
+    },
+    {
+      "word": "nervous",
+      "type": "adj",
+      "meaning": "lo lắng",
+      "example": "The boy became nervous when he heard the news."
+    },
+    {
+      "word": "noise",
+      "type": "n",
+      "meaning": "tiếng ồn",
+      "example": "The crying baby made a loud noise."
+    },
+    {
+      "word": "project",
+      "type": "n",
+      "meaning": "dự án",
+      "example": "His afternoon work project was to paint the room green."
+    },
+    {
+      "word": "scare",
+      "type": "v",
+      "meaning": "làm sợ hãi",
+      "example": "My uncle was scared by what he saw."
+    },
+    {
+      "word": "secret",
+      "type": "n",
+      "meaning": "bí mật",
+      "example": "The two boys were sharing a secret."
+    },
+    {
+      "word": "shout",
+      "type": "v",
+      "meaning": "hét lên",
+      "example": "My boss shouted at me because I was late."
+    },
+    {
+      "word": "smell",
+      "type": "v",
+      "meaning": "ngửi thấy",
+      "example": "The two friends smelled the flower."
+    },
+    {
+      "word": "terrible",
+      "type": "adj",
+      "meaning": "kinh khủng",
+      "example": "The way he treated his classmate was terrible."
+    },
+    {
+      "word": "worse",
+      "type": "adj",
+      "meaning": "tồi tệ hơn",
+      "example": "Business was worse this month than last month."
+    },
+    {
+      "word": "alien",
+      "type": "n",
+      "meaning": "người ngoài hành tinh",
+      "example": "The alien came in peace."
+    },
+    {
+      "word": "among",
+      "type": "prep",
+      "meaning": "ở giữa, trong số",
+      "example": "There was a red apple among the green ones."
+    },
+    {
+      "word": "chart",
+      "type": "n",
+      "meaning": "biểu đồ",
+      "example": "We used a chart to see how we had improved."
+    },
+    {
+      "word": "cloud",
+      "type": "n",
+      "meaning": "đám mây",
+      "example": "The sky was filled with white clouds."
+    },
+    {
+      "word": "comprehend",
+      "type": "v",
+      "meaning": "hiểu",
+      "example": "Henry could not comprehend the message."
+    },
+    {
+      "word": "describe",
+      "type": "v",
+      "meaning": "miêu tả",
+      "example": "They described their tree as colorful with gold ribbon and a star."
+    },
+    {
+      "word": "ever",
+      "type": "adv",
+      "meaning": "từng, bao giờ",
+      "example": "Going skiing last winter was the most fun I've ever had."
+    },
+    {
+      "word": "fail",
+      "type": "v",
+      "meaning": "thất bại",
+      "example": "Since he failed to get the job, he was sad."
+    },
+    {
+      "word": "friendly",
+      "type": "adj",
+      "meaning": "thân thiện",
+      "example": "The friendly animals came up to the girl."
+    },
+    {
+      "word": "grade",
+      "type": "n",
+      "meaning": "điểm số",
+      "example": "I managed to get good grades on my report card."
+    },
+    {
+      "word": "instead",
+      "type": "adv",
+      "meaning": "thay vì",
+      "example": "He ate the carrot instead of the ice cream."
+    },
+    {
+      "word": "planet",
+      "type": "n",
+      "meaning": "hành tinh",
+      "example": "Saturn is the planet with the ring around it."
+    },
+    {
+      "word": "report",
+      "type": "n",
+      "meaning": "bản báo cáo",
+      "example": "Karen had trouble writing her report."
+    },
+    {
+      "word": "several",
+      "type": "adj",
+      "meaning": "một vài",
+      "example": "He had to read several books for class."
+    },
+    {
+      "word": "solve",
+      "type": "v",
+      "meaning": "giải quyết",
+      "example": "She solved the puzzle quickly."
+    },
+    {
+      "word": "suddenly",
+      "type": "adv",
+      "meaning": "đột ngột",
+      "example": "He suddenly appeared in the doorway."
+    },
+    {
+      "word": "suppose",
+      "type": "v",
+      "meaning": "cho rằng",
+      "example": "I suppose I should go home now."
+    },
+    {
+      "word": "universe",
+      "type": "n",
+      "meaning": "vũ trụ",
+      "example": "The universe is so large that it cannot be measured."
+    },
+    {
+      "word": "view",
+      "type": "n",
+      "meaning": "quang cảnh",
+      "example": "Michael likes to view the city from above."
+    },
+    {
+      "word": "voice",
+      "type": "n",
+      "meaning": "giọng nói",
+      "example": "He used a microphone, so everyone could hear his voice."
+    },
+    {
+      "word": "weather",
+      "type": "n",
+      "meaning": "thời tiết",
+      "example": "The weather can be hot or cold."
+    },
+    {
+      "word": "wise",
+      "type": "adj",
+      "meaning": "khôn ngoan",
+      "example": "Many people believe that owls are very wise animals."
+    }
+  ],
+  "25": [
+    {
+      "word": "banana",
+      "type": "noun",
+      "meaning": "quả chuối",
+      "example": "Bananas are yellow."
+    }
+  ],
+  "26": [
+    {
+      "word": "read",
+      "type": "verb",
+      "meaning": "đọc",
+      "example": "I read books every night."
+    }
+  ],
+  "27": [
+    {
+      "word": "smart",
+      "type": "adjective",
+      "meaning": "thông minh",
+      "example": "She is very smart."
+    }
+  ],
+  "28": [
+    {
+      "word": "carefully",
+      "type": "adverb",
+      "meaning": "cẩn thận",
+      "example": "Drive carefully!"
+    }
+  ],
+  "29": [
+    {
+      "word": "friend",
+      "type": "noun",
+      "meaning": "bạn bè",
+      "example": "He is my best friend."
+    }
+  ],
+  "30": [
+    {
+      "word": "paint",
+      "type": "verb",
+      "meaning": "sơn, vẽ",
+      "example": "They paint the wall blue."
+    }
+  ],
+  "31": [
+    {
+      "word": "old",
+      "type": "adjective",
+      "meaning": "già, cũ",
+      "example": "This is an old story."
+    }
+  ]
+}
