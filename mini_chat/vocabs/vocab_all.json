@@ -559,10 +559,568 @@
   ],
   "25": [
     {
-      "word": "banana",
-      "type": "noun",
-      "meaning": "quả chuối",
-      "example": "Bananas are yellow."
+      "word": "allow",
+      "type": "v",
+      "meaning": "cho phép",
+      "example": "Having a ticket will allow you to enter the show."
+    },
+    {
+      "word": "announce",
+      "type": "v",
+      "meaning": "thông báo",
+      "example": "He announced to everyone his new idea for the company."
+    },
+    {
+      "word": "beside",
+      "type": "prep",
+      "meaning": "bên cạnh",
+      "example": "The two brothers stood beside each other."
+    },
+    {
+      "word": "challenge",
+      "type": "n",
+      "meaning": "thử thách",
+      "example": "It was a challenge to climb to the top of the mountain."
+    },
+    {
+      "word": "claim",
+      "type": "v",
+      "meaning": "khẳng định",
+      "example": "He claimed to know why the country's laws were weak."
+    },
+    {
+      "word": "condition",
+      "type": "n",
+      "meaning": "điều kiện",
+      "example": "The patient's condition was very good."
+    },
+    {
+      "word": "contribute",
+      "type": "v",
+      "meaning": "đóng góp",
+      "example": "We decided to contribute money to the new hospital."
+    },
+    {
+      "word": "difference",
+      "type": "n",
+      "meaning": "sự khác biệt",
+      "example": "What is the difference between these two books?"
+    },
+    {
+      "word": "divide",
+      "type": "v",
+      "meaning": "chia, phân chia",
+      "example": "We divided the pizza."
+    },
+    {
+      "word": "expert",
+      "type": "n",
+      "meaning": "chuyên gia",
+      "example": "The wizard was an expert at magic."
+    },
+    {
+      "word": "famous",
+      "type": "adj",
+      "meaning": "nổi tiếng",
+      "example": "The Eiffel Tower in Paris is very famous."
+    },
+    {
+      "word": "force",
+      "type": "n",
+      "meaning": "lực, sức mạnh",
+      "example": "He used all his force to try and open the door."
+    },
+    {
+      "word": "harm",
+      "type": "n",
+      "meaning": "sự tổn hại",
+      "example": "A hot iron can cause great harm if you are not careful."
+    },
+    {
+      "word": "lay",
+      "type": "v",
+      "meaning": "đặt, để",
+      "example": "Don’t lay your socks on the floor."
+    },
+    {
+      "word": "peace",
+      "type": "n",
+      "meaning": "hòa bình",
+      "example": "A white dove is a symbol for peace."
+    },
+    {
+      "word": "prince",
+      "type": "n",
+      "meaning": "hoàng tử",
+      "example": "The prince and princess were married."
+    },
+    {
+      "word": "protect",
+      "type": "v",
+      "meaning": "bảo vệ",
+      "example": "Firemen protect us from fires."
+    },
+    {
+      "word": "sense",
+      "type": "n",
+      "meaning": "giác quan, ý nghĩa",
+      "example": "It makes sense to drive carefully on icy roads."
+    },
+    {
+      "word": "sudden",
+      "type": "adj",
+      "meaning": "đột ngột",
+      "example": "He felt a sudden pain in his chest."
+    },
+    {
+      "word": "therefore",
+      "type": "adv",
+      "meaning": "vì vậy",
+      "example": "He is fat. Therefore, he will go on a diet."
+    },
+    {
+      "word": "accept",
+      "type": "v",
+      "meaning": "chấp nhận",
+      "example": "I accepted the girl’s very nice gift."
+    },
+    {
+      "word": "arrange",
+      "type": "v",
+      "meaning": "sắp xếp",
+      "example": "Please arrange the chairs around the table."
+    },
+    {
+      "word": "attend",
+      "type": "v",
+      "meaning": "tham dự",
+      "example": "My sister and I attend the same school."
+    },
+    {
+      "word": "balance",
+      "type": "v",
+      "meaning": "giữ thăng bằng",
+      "example": "He balanced the glass of water on his head."
+    },
+    {
+      "word": "contrast",
+      "type": "n",
+      "meaning": "sự tương phản",
+      "example": "The contrast between my parents is very noticeable."
+    },
+    {
+      "word": "encourage",
+      "type": "v",
+      "meaning": "khuyến khích",
+      "example": "My football coach will encourage us when we are losing."
+    },
+    {
+      "word": "familiar",
+      "type": "adj",
+      "meaning": "quen thuộc",
+      "example": "The two friends were very familiar with each other."
+    },
+    {
+      "word": "grab",
+      "type": "v",
+      "meaning": "chộp lấy",
+      "example": "I grabbed a pear from the tree."
+    },
+    {
+      "word": "hang",
+      "type": "v",
+      "meaning": "treo",
+      "example": "I drew a picture of my family, and my mother hung it on the wall."
+    },
+    {
+      "word": "huge",
+      "type": "adj",
+      "meaning": "to lớn",
+      "example": "At work, my father drives a huge truck."
+    },
+    {
+      "word": "necessary",
+      "type": "adj",
+      "meaning": "cần thiết",
+      "example": "It is necessary to have a passport when you travel to a foreign country."
+    },
+    {
+      "word": "pattern",
+      "type": "n",
+      "meaning": "mẫu, kiểu mẫu",
+      "example": "My pattern of brushing my teeth is the same as most people’s."
+    },
+    {
+      "word": "propose",
+      "type": "v",
+      "meaning": "đề xuất",
+      "example": "Santa Claus proposed that I try to be a good boy all year."
+    },
+    {
+      "word": "purpose",
+      "type": "n",
+      "meaning": "mục đích",
+      "example": "The purpose of exercising is to get into shape."
+    },
+    {
+      "word": "release",
+      "type": "v",
+      "meaning": "giải phóng, thả",
+      "example": "She released the bird from her hands."
+    },
+    {
+      "word": "require",
+      "type": "v",
+      "meaning": "yêu cầu",
+      "example": "We require teachers to have a university degree."
+    },
+    {
+      "word": "single",
+      "type": "adj",
+      "meaning": "một, đơn",
+      "example": "I only have a single key in my hand."
+    },
+    {
+      "word": "success",
+      "type": "n",
+      "meaning": "thành công",
+      "example": "My daughter was a big success at school."
+    },
+    {
+      "word": "tear",
+      "type": "v",
+      "meaning": "xé",
+      "example": "It is easy to tear paper."
+    },
+    {
+      "word": "theory",
+      "type": "n",
+      "meaning": "lý thuyết",
+      "example": "We talked about Einstein’s theory of relativity in class."
+    },
+    {
+      "word": "against",
+      "type": "prep",
+      "meaning": "chống lại",
+      "example": "They both leaned against the wall."
+    },
+    {
+      "word": "beach",
+      "type": "n",
+      "meaning": "bãi biển",
+      "example": "The little girl built a sandcastle on the beach."
+    },
+    {
+      "word": "damage",
+      "type": "v",
+      "meaning": "làm hư hại",
+      "example": "The car was damaged in the accident."
+    },
+    {
+      "word": "discover",
+      "type": "v",
+      "meaning": "khám phá",
+      "example": "I discovered some new information in this book!"
+    },
+    {
+      "word": "emotion",
+      "type": "n",
+      "meaning": "cảm xúc",
+      "example": "Anger is a common emotion."
+    },
+    {
+      "word": "fix",
+      "type": "v",
+      "meaning": "sửa chữa",
+      "example": "My dad has many tools to help him fix broken things."
+    },
+    {
+      "word": "identify",
+      "type": "v",
+      "meaning": "nhận ra",
+      "example": "I used the file to identify his name."
+    },
+    {
+      "word": "island",
+      "type": "n",
+      "meaning": "hòn đảo",
+      "example": "Japan is a group of islands."
+    },
+    {
+      "word": "ocean",
+      "type": "n",
+      "meaning": "đại dương",
+      "example": "The ocean can be very beautiful."
+    },
+    {
+      "word": "perhaps",
+      "type": "adv",
+      "meaning": "có lẽ",
+      "example": "Perhaps I will eat an apple for lunch."
+    },
+    {
+      "word": "pleasant",
+      "type": "adj",
+      "meaning": "dễ chịu",
+      "example": "The character had a pleasant look on his face."
+    },
+    {
+      "word": "prevent",
+      "type": "v",
+      "meaning": "ngăn ngừa",
+      "example": "The handcuffs prevented me from moving my hands."
+    },
+    {
+      "word": "rock",
+      "type": "n",
+      "meaning": "hòn đá",
+      "example": "I threw the rock into the river."
+    },
+    {
+      "word": "save",
+      "type": "v",
+      "meaning": "cứu, tiết kiệm",
+      "example": "I want to help save the world."
+    },
+    {
+      "word": "step",
+      "type": "n",
+      "meaning": "bước chân",
+      "example": "Be careful where you step."
+    },
+    {
+      "word": "still",
+      "type": "adv",
+      "meaning": "vẫn",
+      "example": "They are still waiting for the bus."
+    },
+    {
+      "word": "taste",
+      "type": "v",
+      "meaning": "nếm",
+      "example": "The taste of the fruit was sweet."
+    },
+    {
+      "word": "throw",
+      "type": "v",
+      "meaning": "ném",
+      "example": "Throw the ball to me."
+    },
+    {
+      "word": "wave",
+      "type": "n",
+      "meaning": "sóng",
+      "example": "The water was filled with large blue waves."
+    },
+    {
+      "word": "benefit",
+      "type": "n",
+      "meaning": "lợi ích",
+      "example": "Being able to fly is a good benefit to birds."
+    },
+    {
+      "word": "certain",
+      "type": "adj",
+      "meaning": "chắc chắn",
+      "example": "I am certain that zebras have stripes."
+    },
+    {
+      "word": "chance",
+      "type": "n",
+      "meaning": "cơ hội",
+      "example": "I had a chance to see the Eiffel Tower last summer."
+    },
+    {
+      "word": "effect",
+      "type": "n",
+      "meaning": "tác động",
+      "example": "The medicine had a good effect on the boy."
+    },
+    {
+      "word": "essential",
+      "type": "adj",
+      "meaning": "thiết yếu",
+      "example": "It is essential to have oxygen when you scuba dive."
+    },
+    {
+      "word": "far",
+      "type": "adj",
+      "meaning": "xa",
+      "example": "It’s far from here to the city."
+    },
+    {
+      "word": "focus",
+      "type": "v",
+      "meaning": "tập trung",
+      "example": "My mom always helps me to focus on my school work."
+    },
+    {
+      "word": "function",
+      "type": "v",
+      "meaning": "hoạt động",
+      "example": "A cellphone’s main function is to call people."
+    },
+    {
+      "word": "grass",
+      "type": "n",
+      "meaning": "cỏ",
+      "example": "The grass is green."
+    },
+    {
+      "word": "guard",
+      "type": "v",
+      "meaning": "bảo vệ",
+      "example": "The police officer will guard us from any harm."
+    },
+    {
+      "word": "image",
+      "type": "n",
+      "meaning": "hình ảnh",
+      "example": "The image on the screen was clear."
+    },
+    {
+      "word": "immediate",
+      "type": "adj",
+      "meaning": "ngay lập tức",
+      "example": "An immediate response is required."
+    },
+    {
+      "word": "primary",
+      "type": "adj",
+      "meaning": "chính, chủ yếu",
+      "example": "His primary thoughts are about money."
+    },
+    {
+      "word": "proud",
+      "type": "adj",
+      "meaning": "tự hào",
+      "example": "She is proud of the picture she drew."
+    },
+    {
+      "word": "remain",
+      "type": "v",
+      "meaning": "vẫn còn, duy trì",
+      "example": "My sister had to remain home since she was sick."
+    },
+    {
+      "word": "rest",
+      "type": "v",
+      "meaning": "nghỉ ngơi",
+      "example": "I rested on the couch after work."
+    },
+    {
+      "word": "separate",
+      "type": "v",
+      "meaning": "tách rời",
+      "example": "New York and Los Angeles are separated by a long distance."
+    },
+    {
+      "word": "site",
+      "type": "n",
+      "meaning": "địa điểm",
+      "example": "We found the perfect site for our picnic."
+    },
+    {
+      "word": "tail",
+      "type": "n",
+      "meaning": "đuôi",
+      "example": "Our dog wags its tail when it’s happy."
+    },
+    {
+      "word": "trouble",
+      "type": "n",
+      "meaning": "rắc rối",
+      "example": "I have trouble working with my boss."
+    },
+    {
+      "word": "across",
+      "type": "prep",
+      "meaning": "băng qua",
+      "example": "He walked across the bridge."
+    },
+    {
+      "word": "breathe",
+      "type": "v",
+      "meaning": "thở",
+      "example": "We need to breathe to live."
+    },
+    {
+      "word": "characteristic",
+      "type": "n",
+      "meaning": "đặc điểm",
+      "example": "One characteristic of tigers is their black stripes."
+    },
+    {
+      "word": "consume",
+      "type": "v",
+      "meaning": "tiêu thụ",
+      "example": "Jack consumed a whole plate of spaghetti."
+    },
+    {
+      "word": "excite",
+      "type": "v",
+      "meaning": "làm phấn khích",
+      "example": "I was excited to see the concert."
+    },
+    {
+      "word": "extreme",
+      "type": "adj",
+      "meaning": "cực đoan",
+      "example": "His workout was so extreme that he was sweating heavily."
+    },
+    {
+      "word": "fear",
+      "type": "n",
+      "meaning": "nỗi sợ",
+      "example": "I have a fear of heights."
+    },
+    {
+      "word": "fortunate",
+      "type": "adj",
+      "meaning": "may mắn",
+      "example": "I was fortunate to get a seat."
+    },
+    {
+      "word": "happen",
+      "type": "v",
+      "meaning": "xảy ra",
+      "example": "Accidents happen every day."
+    },
+    {
+      "word": "length",
+      "type": "n",
+      "meaning": "chiều dài",
+      "example": "The length of the floor is three meters."
+    },
+    {
+      "word": "mistake",
+      "type": "n",
+      "meaning": "lỗi",
+      "example": "It was a mistake to forget my umbrella."
+    },
+    {
+      "word": "observe",
+      "type": "v",
+      "meaning": "quan sát",
+      "example": "Brian observed the sun rising over the mountains."
+    },
+    {
+      "word": "opportunity",
+      "type": "n",
+      "meaning": "cơ hội",
+      "example": "I had an opportunity to take pictures in the jungle."
+    },
+    {
+      "word": "prize",
+      "type": "n",
+      "meaning": "giải thưởng",
+      "example": "I won a prize in the school spelling contest."
+    },
+    {
+      "word": "race",
+      "type": "n",
+      "meaning": "cuộc đua",
+      "example": "Paul is the fastest runner in his race."
     }
   ],
   "26": [
