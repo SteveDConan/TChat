@@ -22,6 +22,62 @@ from telethon.sync import TelegramClient
 from telethon import functions, types, events
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, PhoneCodeExpiredError
 
+
+# import biến ngôn ngữ
+from resources.languages import languages
+
+# import biến config dùng chung
+from resources.config import (
+    API_ID, API_HASH, CURRENT_VERSION, GITHUB_USER, GITHUB_REPO,
+    CONFIG_FILE, WINDOW_SIZE_FILE, CHATGPT_API_KEY_FILE,
+    MARKER_IMAGE_PATH, MARKER_CONFIG_FILE, DEFAULT_TELEGRAM_PATH,
+    DEFAULT_TARGET_LANG, TRANSLATION_ONLY, VERSION_INFO
+)
+
+# import các hàm chức năng 
+from resources.utils import (
+    center_window, copy_to_clipboard,
+    get_tdata_folders, log_message,
+    load_window_size, save_window_size,
+    load_chatgpt_api_key, save_chatgpt_api_key,
+    read_file, write_file
+)
+
+# Import các hàm trong session.py Tất cả logic đăng nhập, session, kiểm tra OTP, 2FA.
+from cores.session import (
+    check_authorization,
+    cleanup_session_files,
+    parse_2fa_info,
+    get_otp,
+    async_login,
+    login_account
+)
+
+# Import các hàm trong manager.py Quản lý folder, copy file, cập nhật stats, thao tác hàng loạt với tdata.
+from cores.manager import (
+    get_tdata_folders,
+    copy_telegram_portable,
+    cleanup_all_sessions,
+    count_valid_tdata,
+    status_report,
+    check_folder_exists,
+    check_file_exists
+)
+
+# Import các hàm trong privacy.py Xử lý cập nhật quyền riêng tư cho các tài khoản Telegram.
+from cores.privacy import update_privacy_sync, run_update_privacy_multi
+
+# Import các hàm trong marker.py Các thao tác liên quan marker image và config marker.
+from checklive.marker import show_marker_selection_popup, load_marker_config, save_marker_config
+
+# Import các hàm trong checklive/compare.py Xử lý so sánh ảnh, chụp screenshot.
+from checklive.compare import capture_window
+
+
+#  Import các hàm trong checklive/file.py Đọc/ghi trạng thái check live ra file .
+from checklive.file import load_check_live_status_file, save_check_live_status_file
+
+
 import requests
 from distutils.version import LooseVersion
 
@@ -49,41 +105,9 @@ from autoit_module import auto_it_function
 # ===== THÊM THƯ VIỆN BỔ SUNG CHO MINI CHAT =====
 # Consolog: Đã chuyển các import mini chat sang mini_chat.py
 
-# NEW: Giữ lại phần config key ChatGPT để open_settings() có thể truy cập
-CHATGPT_API_KEY_FILE = "chatgpt_api_key.txt"
-def load_chatgpt_api_key():
-    if os.path.exists(CHATGPT_API_KEY_FILE):
-        with open(CHATGPT_API_KEY_FILE, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    return ""
-
-def save_chatgpt_api_key(key):
-    with open(CHATGPT_API_KEY_FILE, "w", encoding="utf-8") as f:
-        f.write(key)
-
 # Consolog: Giữ các biến này ở app.py vì open_settings() cũng cần
-CHATGPT_API_KEY = load_chatgpt_api_key()
 
-# NEW: Biến kiểm tra chế độ chỉ dịch (không gửi tin nhắn)
-TRANSLATION_ONLY = True
-print("Consolog: Chế độ 'chỉ dịch' được bật (TRANSLATION_ONLY=True).")
-
-# NEW: Biến mặc định cho ngôn ngữ dịch của đối phương (default là tiếng Việt)
-DEFAULT_TARGET_LANG = "en"
-
-# --- CẤU HÌNH BAN ĐẦU (DEFAULT) ---
-CONFIG_FILE = "config.txt"
-DEFAULT_TELEGRAM_PATH = r"C:\Users\SAM\AppData\Roaming\Telegram Desktop\Telegram.exe"
-API_ID = 22379547
-API_HASH = '9fc2845bde4b64a6a51320a8045c8178'
-CURRENT_VERSION = "1.05"
-GITHUB_USER = "nunerit"
-GITHUB_REPO = "TelegramAuto"
-
-VERSION_INFO = "Version 1.0.5 - Copyright SAMADS"
-
-# File lưu kích thước cửa sổ
-WINDOW_SIZE_FILE = "window_size.txt"
+CHATGPT_API_KEY = load_chatgpt_api_key(CHATGPT_API_KEY_FILE)
 
 # --- CẤU HÌNH CHO MARKER IMAGE ---
 MARKER_IMAGE_PATH = os.path.join(os.getcwd(), "marker_image.png")
@@ -113,286 +137,6 @@ def get_window_handle_by_pid(pid):
         return handles[0]
     return None
 
-##########################################################################
-# SỬA: Hàm capture_window để chụp full content (PrintWindow(hwnd, srcdc, 2))
-##########################################################################
-def capture_window(hwnd):
-    gdi32 = ctypes.windll.gdi32
-    rect = wintypes.RECT()
-    user32.GetWindowRect(hwnd, ctypes.byref(rect))
-    width = rect.right - rect.left
-    height = rect.bottom - rect.top
-    hwindc = user32.GetWindowDC(hwnd)
-    srcdc = gdi32.CreateCompatibleDC(hwindc)
-    bmp = gdi32.CreateCompatibleBitmap(hwindc, width, height)
-    gdi32.SelectObject(srcdc, bmp)
-    result = user32.PrintWindow(hwnd, srcdc, 2)
-    if result != 1:
-        print("Consolog [WARNING]: PrintWindow không thành công hoặc chỉ chụp được 1 phần.")
-
-    class BITMAPINFOHEADER(ctypes.Structure):
-        _fields_ = [
-            ("biSize", ctypes.c_uint32),
-            ("biWidth", ctypes.c_int32),
-            ("biHeight", ctypes.c_int32),
-            ("biPlanes", ctypes.c_uint16),
-            ("biBitCount", ctypes.c_uint16),
-            ("biCompression", ctypes.c_uint32),
-            ("biSizeImage", ctypes.c_uint32),
-            ("biXPelsPerMeter", ctypes.c_int32),
-            ("biYPelsPerMeter", ctypes.c_int32),
-            ("biClrUsed", ctypes.c_uint32),
-            ("biClrImportant", ctypes.c_uint32),
-        ]
-
-    bmi = BITMAPINFOHEADER()
-    bmi.biSize = ctypes.sizeof(BITMAPINFOHEADER)
-    bmi.biWidth = width
-    bmi.biHeight = -height
-    bmi.biPlanes = 1
-    bmi.biBitCount = 32
-    bmi.biCompression = 0
-
-    buffer_len = width * height * 4
-    buffer = ctypes.create_string_buffer(buffer_len)
-    _ = gdi32.GetDIBits(srcdc, bmp, 0, height, buffer, ctypes.byref(bmi), 0)
-
-    from PIL import Image
-    image = Image.frombuffer('RGBA', (width, height), buffer, 'raw', 'BGRA', 0, 1)
-
-    gdi32.DeleteObject(bmp)
-    gdi32.DeleteDC(srcdc)
-    user32.ReleaseDC(hwnd, hwindc)
-
-    return image
-
-languages = {
-    "vi": {
-        "title": "Công cụ Tự động Telegram TData",
-        "choose_folder": "Chọn thư mục",
-        "save_path": "💾 Lưu đường dẫn",
-        "login_all": "🔐 Telethon",
-        "auto_it": "🤖 AutoIT",
-        "check_live": "🔍 Check live",
-        "report": "📝 Report",
-        "copy_telegram": "📋 Copy Telegram Portable",
-        "open_telegram": "🟢 Mở Telegram Copies",
-        "close_telegram": "❌ Đóng All Telegram",
-        "arrange_telegram": "🟣 Sắp xếp Telegram",
-        "check_update": "🔄 Check for Updates",
-        "stats_label": "Bảng thống kê thư mục con:",
-        "account_summary": "Thống kê tài khoản:",
-        "logged_accounts": "Tài khoản đã đăng nhập:",
-        "log_label": "Tiến trình:",
-        "telegram_path_label": "Đường dẫn Telegram:",
-        "lang_select_title": "Chọn ngôn ngữ",
-        "lang_vi": "Tiếng Việt",
-        "lang_en": "English",
-        "lang_zh": "中文",
-        "msg_saved_path": "Đã lưu đường dẫn vào máy!",
-        "msg_error_path": "Đường dẫn không hợp lệ!",
-        "msg_copy_result": "Kết quả Copy",
-        "msg_open_result": "Kết quả mở Telegram",
-        "msg_login_complete": "Quá trình đăng nhập cho tất cả các tài khoản đã hoàn tất.",
-        "msg_privacy_complete": "Đã cập nhật quyền riêng tư cho tất cả các tài khoản.",
-        "already_logged": "Đã có session",
-        "success": "Thành công",
-        "failure": "Thất bại",
-        "not_found": "Chưa có",
-        "otp_prompt": "Nhập mã OTP gửi tới {phone}:",
-        "phone_prompt": "Nhập số điện thoại cho tài khoản ở\n{folder}:",
-        "2fa_error": "Không tìm thấy mật khẩu 2FA tự động cho {phone}.",
-        "copy_success": "Copy telegram.exe thành công cho {phone}",
-        "copy_skip": "{phone} đã có telegram.exe, bỏ qua.",
-        "close_result": "Đóng All Telegram:\nĐã đóng: {closed}\nLỗi: {errors}",
-        "arrange_result": "Đã sắp xếp {count} cửa sổ Telegram.",
-        "update_available": "Phiên bản {version} có sẵn. Bạn có muốn cập nhật không?",
-        "no_updates": "Bạn đã có phiên bản mới nhất.",
-        "update_error": "Lỗi kiểm tra cập nhật.",
-        "create_session": "Tạo session",
-        "update_privacy": "Thay đổi Quyền riêng tư",
-        "change_info": "Thay đổi Thông tin tài khoản",
-        "popup_inactive_title": "Danh sách TData đã bị log out",
-        "popup_inactive_copy": "Copy toàn bộ danh sách",
-        "popup_inactive_delete": "Xóa tất cả thư mục không hoạt động",
-        "copy_inactive": "Copy Tdata không hoạt động",
-        "delete_inactive": "Xóa Tdata không hoạt động",
-        "copy_table": "Copy table",
-        "processing": "Đang xử lý",
-        "skipped": "Bỏ qua",
-        "not_checked": "Chưa check",
-        "checking": "Đang check",
-        "completed": "Hoàn thành",
-        "exe_not_found": "Không tìm thấy exe",
-        "not_active": "Không hoạt động",
-        "live": "Live",
-        "stt": "STT",
-        "check_status": "Trạng thái check",
-        "live_status": "Trạng thái Live",
-        "start": "Bắt đầu",
-        "pause": "Tạm dừng",
-        "confirm": "Xác nhận",
-        "check_live_title": "Check live - Danh sách TData",
-        "login_window_title": "Tiến trình đăng nhập",
-        "not_started": "Chưa chạy",
-        "auto_it_in_development": "Chức năng AutoIT đang được phát triển.",
-        "report_in_development": "Chức năng Report đang được phát triển.",
-        "change_info_in_development": "Chức năng thay đổi thông tin tài khoản đang được phát triển.",
-        "telethon_session_title": "Phiên Telethon - {phone}",
-        "invalid_source_exe": "Source telegram.exe không hợp lệ!",
-        "close_result_title": "Kết quả đóng"
-    },
-    "en": {
-        "title": "Telegram TData Auto Tool",
-        "choose_folder": "Choose Folder",
-        "save_path": "💾 Save Path",
-        "login_all": "🔐 Telethon",
-        "auto_it": "🤖 AutoIT",
-        "check_live": "🔍 Check live",
-        "report": "📝 Report",
-        "copy_telegram": "📋 Copy Telegram Portable",
-        "open_telegram": "🟢 Open Telegram Copies",
-        "close_telegram": "❌ Close All Telegram",
-        "arrange_telegram": "🟣 Arrange Telegram",
-        "check_update": "🔄 Check for Updates",
-        "stats_label": "Folder Statistics:",
-        "account_summary": "Account Summary:",
-        "logged_accounts": "Logged In Accounts:",
-        "log_label": "Log:",
-        "telegram_path_label": "Telegram Path:",
-        "lang_select_title": "Select Language",
-        "lang_vi": "Tiếng Việt",
-        "lang_en": "English",
-        "lang_zh": "中文",
-        "msg_saved_path": "Path saved successfully!",
-        "msg_error_path": "Invalid path!",
-        "msg_copy_result": "Copy Result",
-        "msg_open_result": "Telegram Open Result",
-        "msg_login_complete": "Login process completed for all accounts.",
-        "msg_privacy_complete": "Privacy updated for all accounts.",
-        "already_logged": "Already Logged In",
-        "success": "Success",
-        "failure": "Failure",
-        "not_found": "Not Found",
-        "otp_prompt": "Enter OTP sent to {phone}:",
-        "phone_prompt": "Enter phone number for account in\n{folder}:",
-        "2fa_error": "No automatic 2FA password found for {phone}.",
-        "copy_success": "Copied telegram.exe successfully for {phone}",
-        "copy_skip": "{phone} already has telegram.exe, skipped.",
-        "close_result": "Close All Telegram:\nClosed: {closed}\nErrors: {errors}",
-        "arrange_result": "Arranged {count} Telegram windows.",
-        "update_available": "Version {version} is available. Do you want to update?",
-        "no_updates": "You already have the latest version.",
-        "update_error": "Error checking for updates.",
-        "create_session": "Create Session",
-        "update_privacy": "Update Privacy",
-        "change_info": "Change Account Info",
-        "popup_inactive_title": "Inactive TData Folders",
-        "popup_inactive_copy": "Copy All Inactive",
-        "popup_inactive_delete": "Delete All Inactive Folders",
-        "copy_inactive": "Copy Inactive TData",
-        "delete_inactive": "Delete Inactive TData",
-        "copy_table": "Copy table",
-        "processing": "Processing",
-        "skipped": "Skipped",
-        "not_checked": "Not checked",
-        "checking": "Checking",
-        "completed": "Completed",
-        "exe_not_found": "Exe not found",
-        "not_active": "Not active",
-        "live": "Live",
-        "stt": "No.",
-        "check_status": "Check Status",
-        "live_status": "Live Status",
-        "start": "Start",
-        "pause": "Pause",
-        "confirm": "Confirm",
-        "check_live_title": "Check live - TData List",
-        "login_window_title": "Login Process",
-        "not_started": "Not started",
-        "auto_it_in_development": "AutoIT feature is under development.",
-        "report_in_development": "Report feature is under development.",
-        "change_info_in_development": "Change account info feature is under development.",
-        "telethon_session_title": "Telethon Session - {phone}",
-        "invalid_source_exe": "Invalid source telegram.exe!",
-        "close_result_title": "Close Result"
-    },
-    "zh": {
-        "title": "Telegram TData 自动工具",
-        "choose_folder": "选择文件夹",
-        "save_path": "💾 保存路径",
-        "login_all": "🔐 Telethon",
-        "auto_it": "🤖 AutoIT",
-        "check_live": "🔍 Check live",
-        "report": "📝 Report",
-        "copy_telegram": "📋 复制 Telegram Portable",
-        "open_telegram": "🟢 打开 Telegram 副本",
-        "close_telegram": "❌ 关闭所有 Telegram",
-        "arrange_telegram": "🟣 排列 Telegram",
-        "check_update": "🔄 检查更新",
-        "stats_label": "Folder Statistics:",
-        "account_summary": "Account Summary:",
-        "logged_accounts": "Logged In Accounts:",
-        "log_label": "Log:",
-        "telegram_path_label": "Telegram Path:",
-        "lang_select_title": "Select Language",
-        "lang_vi": "Tiếng Việt",
-        "lang_en": "English",
-        "lang_zh": "中文",
-        "msg_saved_path": "Path saved successfully!",
-        "msg_error_path": "Invalid path!",
-        "msg_copy_result": "Copy Result",
-        "msg_open_result": "Telegram Open Result",
-        "msg_login_complete": "Login process completed for all accounts.",
-        "msg_privacy_complete": "Privacy updated for all accounts.",
-        "already_logged": "Already Logged In",
-        "success": "Success",
-        "failure": "Failure",
-        "not_found": "Not Found",
-        "otp_prompt": "Enter OTP sent to {phone}:",
-        "phone_prompt": "Enter phone number for account in\n{folder}:",
-        "2fa_error": "No automatic 2FA password found for {phone}.",
-        "copy_success": "Copied telegram.exe successfully for {phone}",
-        "copy_skip": "{phone} already has telegram.exe, skipped.",
-        "close_result": "Close All Telegram:\nClosed: {closed}\nErrors: {errors}",
-        "arrange_result": "Arranged {count} Telegram windows.",
-        "update_available": "Version {version} is available. Do you want to update?",
-        "no_updates": "You already have the latest version.",
-        "update_error": "Error checking for updates.",
-        "create_session": "Create Session",
-        "update_privacy": "Update Privacy",
-        "change_info": "Change Account Info",
-        "popup_inactive_title": "Inactive TData Folders",
-        "popup_inactive_copy": "Copy All Inactive",
-        "popup_inactive_delete": "Delete All Inactive Folders",
-        "copy_inactive": "Copy Inactive TData",
-        "delete_inactive": "Delete Inactive TData",
-        "copy_table": "Copy table",
-        "processing": "Processing",
-        "skipped": "Skipped",
-        "not_checked": "Not checked",
-        "checking": "Checking",
-        "completed": "Completed",
-        "exe_not_found": "Exe not found",
-        "not_active": "Not active",
-        "live": "Live",
-        "stt": "No.",
-        "check_status": "Check Status",
-        "live_status": "Live Status",
-        "start": "Start",
-        "pause": "Pause",
-        "confirm": "Confirm",
-        "check_live_title": "Check live - TData List",
-        "login_window_title": "登录进程",
-        "not_started": "未开始",
-        "auto_it_in_development": "AutoIT 功能正在开发中。",
-        "report_in_development": "报告功能正在开发中。",
-        "change_info_in_development": "更改账户信息功能正在开发中。",
-        "telethon_session_title": "Telethon会话 - {phone}",
-        "invalid_source_exe": "无效的 telegram.exe 源文件！",
-        "close_result_title": "关闭结果"
-    }
-}
 
 lang = {}
 successful_sessions = set()
@@ -413,22 +157,6 @@ def warn_check_live():
     if res:
         close_all_telegram_threaded()
     check_live_window()
-
-############################################
-# HÀM KIỂM TRA SESSION ĐÃ ỦY QUYỀN CHƯA
-############################################
-async def check_authorization(session_path, phone):
-    print(f"Consolog: Kiểm tra authorization cho {phone} từ session: {session_path}")
-    client = TelegramClient(session_path, API_ID, API_HASH)
-    try:
-        await client.connect()
-        authorized = await client.is_user_authorized()
-        await client.disconnect()
-        print(f"Consolog: Authorization cho {phone}: {authorized}")
-        return authorized
-    except Exception as e:
-        print(f"Consolog [ERROR]: Lỗi kiểm tra authorization cho {phone}: {e}")
-        return False
 
 ############################################
 # HÀM TỰ ĐÓNG TELEGRAM
@@ -471,76 +199,8 @@ def auto_close_telegram():
 def close_all_telegram_threaded():
     threading.Thread(target=close_all_telegram, daemon=True).start()
 
-############################################
-# PHẦN NHẬP OTP
-############################################
-def get_otp(phone):
-    print(f"Consolog: Yêu cầu nhập OTP cho {phone}")
-    otp_result = [None]
-    event = threading.Event()
-    def ask():
-        otp_result[0] = simpledialog.askstring("OTP", lang["otp_prompt"].format(phone=phone), parent=root)
-        print(f"Consolog: OTP đã được nhập: {otp_result[0]}")
-        event.set()
-    root.after(0, ask)
-    event.wait()
-    return otp_result[0]
 
-############################################
-# PARSE 2FA: LẤY FILE CHỨA MẬT KHẨU
-############################################
-def parse_2fa_info(tdata_folder):
-    print(f"Consolog: Đang parse thông tin 2FA từ folder: {tdata_folder}")
-    for root_dir, dirs, files in os.walk(tdata_folder):
-        for file in files:
-            if file.lower().endswith('.txt') and "2fa" in file.lower():
-                path = os.path.join(root_dir, file)
-                print(f"Consolog: Kiểm tra candidate 2FA file: {path}")
-                try:
-                    with open(path, "r", encoding="utf-8-sig") as f:
-                        lines = [line.strip() for line in f if line.strip()]
-                    if len(lines) == 1:
-                        print(f"Consolog: Tìm thấy mật khẩu 2FA: {lines[0]}")
-                        return {"password": lines[0]}
-                    else:
-                        print(f"Consolog: File {path} chứa {len(lines)} dòng, không hợp lệ")
-                except Exception as e:
-                    print(f"Consolog [ERROR]: Lỗi đọc file {path}: {e}")
-    for root_dir, dirs, files in os.walk(tdata_folder):
-        for file in files:
-            if file.lower().endswith('.txt') and "2fa" not in file.lower():
-                path = os.path.join(root_dir, file)
-                print(f"Consolog: Kiểm tra candidate file: {path}")
-                try:
-                    with open(path, "r", encoding="utf-8-sig") as f:
-                        lines = [line.strip() for line in f if line.strip()]
-                    if len(lines) == 1:
-                        print(f"Consolog: Tìm thấy mật khẩu: {lines[0]}")
-                        return {"password": lines[0]}
-                    else:
-                        print(f"Consolog: File {path} chứa {len(lines)} dòng, không hợp lệ")
-                except Exception as e:
-                    print(f"Consolog [ERROR]: Lỗi đọc file {path}: {e}")
-    return {}
 
-############################################
-# HÀM DỌN DẸP SESSION
-############################################
-def cleanup_session_files(session_base):
-    session_file = session_base + ".session"
-    print(f"Consolog: Đang dọn dẹp session từ: {session_base}")
-    if os.path.exists(session_file):
-        try:
-            os.remove(session_file)
-            print(f"Consolog: Đã xóa file session {session_file}")
-        except Exception as e:
-            print(f"Consolog [ERROR]: Lỗi xóa file session {session_file}: {e}")
-    if os.path.exists(session_base) and os.path.isdir(session_base):
-        try:
-            shutil.rmtree(session_base)
-            print(f"Consolog: Đã xóa thư mục session {session_base}")
-        except Exception as e:
-            print(f"Consolog [ERROR]: Lỗi xóa thư mục {session_base}: {e}")
 
 def delete_all_sessions():
     tdata_dir = ""
@@ -771,11 +431,6 @@ def arrange_telegram_windows(custom_width=500, custom_height=504, for_check_live
 
     messagebox.showinfo("Arrange", lang["arrange_result"].format(count=n))
 
-def log_message(msg):
-    text_log.insert(tk.END, msg + "\n")
-    text_log.see(tk.END)
-    print(f"[LOG] {msg}")
-
 def save_path():
     folder_path = entry_path.get()
     print(f"Consolog: Lưu đường dẫn: {folder_path}")
@@ -839,16 +494,6 @@ def update_logged():
         text_logged.insert(tk.END, lang["not_found"])
     print("Consolog: Cập nhật logged sessions.")
 
-def get_tdata_folders(main_dir):
-    if not os.path.exists(main_dir):
-        return []
-    folders = [
-        os.path.join(main_dir, f) for f in os.listdir(main_dir)
-        if os.path.isdir(os.path.join(main_dir, f))
-    ]
-    print(f"Consolog: Tìm thấy {len(folders)} thư mục TData trong {main_dir}")
-    return folders
-
 def open_telegram_with_tdata(tdata_folder):
     telegram_exe = os.path.join(tdata_folder, "telegram.exe")
     tdata_sub = os.path.join(tdata_folder, "tdata")
@@ -864,109 +509,10 @@ def open_telegram_with_tdata(tdata_folder):
     time.sleep(1)
     return proc
 
-async def async_login(session_path, phone, tdata_folder):
-    print(f"Consolog: Bắt đầu đăng nhập cho {phone} với session: {session_path}")
-    client = TelegramClient(session_path, API_ID, API_HASH)
-    try:
-        await client.connect()
-    except Exception as e:
-        log_message(f"Consolog [ERROR]: Lỗi kết nối cho {phone}: {e}")
-        cleanup_session_files(session_path)
-        return False
-    if not await client.is_user_authorized():
-        try:
-            await client.send_code_request(phone)
-            log_message(f"Consolog: Đã gửi OTP cho {phone}")
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Gửi mã OTP thất bại cho {phone}: {e}")
-            await client.disconnect()
-            cleanup_session_files(session_path)
-            return False
-        otp = get_otp(phone)
-        if not otp:
-            messagebox.showerror("Lỗi", "Không nhập OTP.")
-            await client.disconnect()
-            cleanup_session_files(session_path)
-            return False
-        auto_close_telegram()
-        log_message("Consolog: Đợi 0.5 giây sau khi đóng Telegram Portable...")
-        await asyncio.sleep(1)
-        log_message("Consolog: Bắt đầu tiến trình đăng nhập với OTP.")
-        try:
-            await client.sign_in(phone, otp)
-            if not await client.is_user_authorized():
-                raise Exception("Đăng nhập OTP không thành công, cần 2FA")
-            log_message(f"Consolog: Đăng nhập thành công cho {phone} (không 2FA)")
-        except SessionPasswordNeededError:
-            twofa_info = parse_2fa_info(tdata_folder)
-            if "password" not in twofa_info:
-                messagebox.showerror("Lỗi", lang["2fa_error"].format(phone=phone))
-                await client.disconnect()
-                cleanup_session_files(session_path)
-                return False
-            password_2fa = twofa_info["password"]
-            try:
-                await client.sign_in(password=password_2fa)
-                if not await client.is_user_authorized():
-                    raise Exception("Đăng nhập không thành công sau khi nhập mật khẩu 2FA.")
-                log_message(f"Consolog: Đăng nhập thành công cho {phone} (2FA)")
-            except Exception as e2:
-                log_message(f"Consolog [ERROR]: Lỗi đăng nhập 2FA cho {phone}: {e2}")
-                messagebox.showerror("Lỗi", f"Đăng nhập 2FA thất bại cho {phone}: {e2}")
-                await client.disconnect()
-                cleanup_session_files(session_path)
-                return False
-        except PhoneCodeInvalidError:
-            messagebox.showerror("Lỗi", f"Mã OTP không đúng cho {phone}!")
-            await client.disconnect()
-            cleanup_session_files(session_path)
-            return False
-        except PhoneCodeExpiredError:
-            messagebox.showerror("Lỗi", f"Mã OTP đã hết hạn cho {phone}!")
-            await client.disconnect()
-            cleanup_session_files(session_path)
-            return False
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Đăng nhập thất bại cho {phone}: {e}")
-            await client.disconnect()
-            cleanup_session_files(session_path)
-            return False
-    log_message(f"Consolog: Session cho {phone} đã được lưu tại {session_path}")
-    await client.disconnect()
-    return True
-
-def login_account(tdata_folder, update_item_callback):
-    session_file = os.path.join(tdata_folder, "session.session")
-    session_folder = os.path.join(tdata_folder, "session")
-    phone = os.path.basename(tdata_folder)
-    print(f"Consolog: Đang đăng nhập tài khoản: {phone}")
-    _ = open_telegram_with_tdata(tdata_folder)
-    if os.path.exists(session_file) or os.path.exists(session_folder):
-        authorized = asyncio.run(check_authorization(session_folder, phone))
-        if authorized:
-            update_item_callback(phone, lang["skipped"])
-            successful_sessions.add(phone)
-            print(f"Consolog: {phone} session đã có, bỏ qua đăng nhập.")
-            return True
-        else:
-            cleanup_session_files(session_folder)
-    result = asyncio.run(async_login(os.path.join(tdata_folder, "session"), phone, tdata_folder))
-    if result:
-        update_item_callback(phone, lang["success"])
-        successful_sessions.add(phone)
-    else:
-        update_item_callback(phone, lang["failure"])
-    return result
 
 def change_account_settings():
     print("Consolog: Yêu cầu thay đổi thông tin tài khoản.")
     messagebox.showinfo("Thông báo", lang["change_info_in_development"])
-
-def copy_to_clipboard(text):
-    root.clipboard_clear()
-    root.clipboard_append(text)
-    messagebox.showinfo("Copied", f"Đã copy: {text}")
-    print(f"Consolog: Đã copy: {text}")
 
 def open_telethon_terminal(session_folder):
     phone = os.path.basename(session_folder)
@@ -1280,35 +826,6 @@ confirm_done = False
 tdata_process_map = {}
 TEMP_SCREENSHOT_FOLDER = None
 
-def load_check_live_status_file():
-    print("Consolog: Đang load trạng thái check live từ file...")
-    if os.path.exists("check_live_status.txt"):
-        try:
-            with open("check_live_status.txt", "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if ": Check:" in line and "| Live:" in line:
-                        name_part, rest = line.split(": Check:", 1)
-                        tdata_name = name_part.strip()
-                        if "| Live:" in rest:
-                            check_part, live_part = rest.split("| Live:", 1)
-                            check_live_status[tdata_name] = {
-                                "check": check_part.strip(),
-                                "live": live_part.strip()
-                            }
-            print("Consolog: Đã load trạng thái check live thành công.")
-        except Exception as e:
-            print(f"Consolog [ERROR]: Lỗi đọc file check_live_status.txt: {e}")
-
-def save_check_live_status_file():
-    print("Consolog: Lưu trạng thái check live vào file...")
-    try:
-        with open("check_live_status.txt", "w", encoding="utf-8") as f:
-            for key, val in check_live_status.items():
-                f.write(f"{key}: Check: {val['check']} | Live: {val['live']}\n")
-        print("Consolog: Lưu trạng thái thành công.")
-    except Exception as e:
-        print(f"Consolog [ERROR]: Lỗi ghi file check_live_status.txt: {e}")
 
 def compare_screenshot_with_marker(screenshot, marker_image, threshold=20):
     print("Consolog: So sánh ảnh chụp với marker image...")
@@ -1322,72 +839,6 @@ def compare_screenshot_with_marker(screenshot, marker_image, threshold=20):
     print(f"Consolog: Giá trị RMS = {rms}")
     return rms < threshold
 
-def show_marker_selection_popup(screenshot_paths):
-    print("Consolog: Hiển thị popup chọn marker image...")
-    popup = tk.Toplevel(root)
-    popup.title("Chọn marker image")
-    center_window(popup, 800, 600)
-    instruction = tk.Label(
-        popup,
-        text="Hãy chỉ ra cho tôi đâu là dấu hiệu nhận biết tài khoản telegram đã chết bằng cách chọn ảnh từ danh sách bên trái",
-        font=("Arial Unicode MS", 10, "bold"),
-        wraplength=780
-    )
-    instruction.pack(pady=10)
-
-    selected_path = {"path": None}
-
-    frame = tk.Frame(popup)
-    frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-    listbox = tk.Listbox(frame, width=40)
-    listbox.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
-
-    for path in screenshot_paths:
-        listbox.insert(tk.END, os.path.basename(path))
-
-    preview_label = tk.Label(frame)
-    preview_label.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-    def on_select(event):
-        selection = listbox.curselection()
-        if selection:
-            index = selection[0]
-            file_path = screenshot_paths[index]
-            selected_path["path"] = file_path
-            try:
-                img = Image.open(file_path)
-                img.thumbnail((400, 400))
-                photo = ImageTk.PhotoImage(img)
-                preview_label.config(image=photo)
-                preview_label.image = photo
-            except Exception as e:
-                print(f"Consolog [ERROR]: Lỗi mở ảnh {file_path}: {e}")
-
-    listbox.bind("<<ListboxSelect>>", on_select)
-
-    def on_confirm():
-        if not selected_path["path"]:
-            messagebox.showwarning("Warning", "Vui lòng chọn một ảnh!")
-            return
-        if os.path.exists(MARKER_IMAGE_PATH):
-            try:
-                os.remove(MARKER_IMAGE_PATH)
-                print("Consolog: Xóa file marker cũ.")
-            except Exception as e:
-                print(f"Consolog [ERROR]: Lỗi xóa file marker cũ: {e}")
-        try:
-            shutil.copy(selected_path["path"], MARKER_IMAGE_PATH)
-            print(f"Consolog: Đã lưu marker image tại {MARKER_IMAGE_PATH}")
-        except Exception as e:
-            print(f"Consolog [ERROR]: Lỗi lưu marker image: {e}")
-        popup.destroy()
-
-    confirm_button = tk.Button(popup, text="Xác nhận", command=on_confirm)
-    confirm_button.pack(pady=10)
-    popup.transient(root)
-    popup.grab_set()
-    root.wait_window(popup)
 
 def screenshot_comparison_worker():
     print("Consolog: Luồng so sánh ảnh bắt đầu, chờ 2 giây...")
@@ -1495,7 +946,7 @@ def check_live_window():
 
     tk.Label(size_frame, text="Window Width:").grid(row=0, column=0, padx=5)
     entry_width = tk.Entry(size_frame, width=6)
-    default_width, default_height = load_window_size()
+    default_width, default_height = load_window_size(WINDOW_SIZE_FILE)
     entry_width.insert(0, str(default_width))
     entry_width.grid(row=0, column=1, padx=5)
 
@@ -1779,49 +1230,6 @@ def open_telegram_copies():
         root.after(0, lambda: arrange_telegram_windows(arrange_width, arrange_height))
     threading.Thread(target=worker, daemon=True).start()
 
-def copy_telegram_portable():
-    print("Consolog: Đang copy telegram.exe cho các tài khoản...")
-    tdata_dir = entry_path.get()
-    if not os.path.exists(tdata_dir):
-        messagebox.showerror("Lỗi", lang["msg_error_path"])
-        return
-    tdata_folders = get_tdata_folders(tdata_dir)
-    results = []
-    copied = []
-    skipped = []
-    errors = []
-
-    source_exe = telegram_path_entry.get()
-    if not os.path.isfile(source_exe):
-        messagebox.showerror("Error", lang["invalid_source_exe"])
-        return
-
-    for folder in tdata_folders:
-        target_path = os.path.join(folder, "telegram.exe")
-        phone = os.path.basename(folder)
-        if not os.path.exists(target_path):
-            try:
-                shutil.copy(source_exe, target_path)
-                copied.append(phone)
-                log_message(f"Consolog: {lang['copy_success'].format(phone=phone)}")
-            except Exception as e:
-                errors.append(f"{phone}: {str(e)}")
-                log_message(f"Consolog [ERROR]: Lỗi copy telegram.exe cho {phone}: {e}")
-        else:
-            skipped.append(phone)
-            log_message(lang["copy_skip"].format(phone=phone))
-
-    summary = f"Đã copy: {len(copied)}\nBỏ qua: {len(skipped)}\nLỗi: {len(errors)}\n"
-    if copied:
-        summary += "Đã copy: " + ", ".join(copied) + "\n"
-    if skipped:
-        summary += "Bỏ qua: " + ", ".join(skipped) + "\n"
-    if errors:
-        summary += "Lỗi: " + "; ".join(errors)
-
-    messagebox.showinfo(lang["msg_copy_result"], summary)
-    print("Consolog: Hoàn thành copy telegram.exe.")
-
 def close_all_telegram():
     print("Consolog: Đang đóng tất cả tiến trình Telegram...")
     try:
@@ -1877,7 +1285,7 @@ def open_settings():
 
     tk.Label(popup, text="ChatGPT API Key:").pack(pady=5)
     chatgpt_key_entry = tk.Entry(popup, width=50)
-    chatgpt_key_entry.insert(0, load_chatgpt_api_key())
+    chatgpt_key_entry.insert(0, load_chatgpt_api_key("chatgpt_api_key.txt"))
     chatgpt_key_entry.pack(pady=5)
 
     tk.Label(popup, text="Default Translation Language (Target):").pack(pady=5)
@@ -1909,37 +1317,6 @@ def open_settings():
     popup.transient(root)
     popup.grab_set()
     root.wait_window(popup)
-
-def center_window(win, width, height):
-    win.update_idletasks()
-    screen_width = win.winfo_screenwidth()
-    screen_height = win.winfo_screenheight()
-    x = (screen_width - width) // 2
-    y = (screen_height - height) // 2
-    win.geometry(f"{width}x{height}+{x}+{y}")
-
-def load_window_size():
-    if os.path.exists(WINDOW_SIZE_FILE):
-        try:
-            with open(WINDOW_SIZE_FILE, "r") as f:
-                line = f.read().strip()
-                parts = line.split(",")
-                if len(parts) == 2:
-                    width = int(parts[0])
-                    height = int(parts[1])
-                    print(f"Consolog: Load kích thước cửa sổ từ file: {width}x{height}")
-                    return width, height
-        except Exception as e:
-            print(f"Consolog [ERROR]: Lỗi load kích thước cửa sổ: {e}")
-    return 500, 504
-
-def save_window_size(width, height):
-    try:
-        with open(WINDOW_SIZE_FILE, "w") as f:
-            f.write(f"{width},{height}")
-        print(f"Consolog: Lưu kích thước cửa sổ: {width}x{height}")
-    except Exception as e:
-        print(f"Consolog [ERROR]: Lỗi lưu kích thước cửa sổ: {e}")
 
 def load_marker_config():
     config = {"dont_ask": False}

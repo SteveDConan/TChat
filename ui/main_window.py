@@ -1,101 +1,80 @@
+# ui/main_window.py
+
 import tkinter as tk
 from tkinter import ttk
-import tkinter.font as tkFont
 
-class MainWindow:
-    def __init__(self, root, lang):
-        self.root = root
-        self.lang = lang
-        self.setup_ui()
+def create_main_window(
+    root, lang, VERSION_INFO,
+    on_browse_folder, on_save_path, on_login_all, on_copy, on_open, on_close,
+    on_arrange, on_autoit, on_check_live, on_setting, on_update,
+    entry_path, telegram_path_entry,
+    update_stats, update_logged,
+    text_stats, text_logged, text_log
+):
+    """
+    Tạo và setup giao diện màn hình chính.
+    Các tham số là các callback/hàm/biến được truyền từ app.py vào.
 
-    def setup_ui(self):
-        # Set default font
-        default_font = tkFont.nametofont("TkDefaultFont")
-        default_font.configure(family="Arial Unicode MS", size=10)
-        self.root.option_add("*Font", default_font)
+    :param root: Tk() root window
+    :param lang: dict ngôn ngữ
+    :param VERSION_INFO: string version
+    ... (các callback khác)
+    """
+    root.title(lang["title"])
 
-        # Title
-        label_title = tk.Label(self.root, text=self.lang["title"], font=("Arial Unicode MS", 14, "bold"))
-        label_title.pack(pady=10)
+    # Title
+    label_title = tk.Label(root, text=lang["title"], font=("Arial Unicode MS", 14, "bold"))
+    label_title.pack(pady=10)
 
-        # Path frame
-        self.create_path_frame()
-        
-        # Telegram path frame
-        self.create_telegram_path_frame()
-        
-        # Button frames
-        self.create_button_frames()
-        
-        # Stats and log frames
-        self.create_stats_frame()
-        self.create_log_frame()
+    # Chọn folder TData
+    frame_path = tk.Frame(root)
+    frame_path.pack(pady=5)
+    entry_path.pack(in_=frame_path, side=tk.LEFT, padx=5)
+    btn_browse = tk.Button(frame_path, text=lang["choose_folder"], command=on_browse_folder)
+    btn_browse.pack(side=tk.LEFT)
 
-    def create_path_frame(self):
-        frame_path = tk.Frame(self.root)
-        frame_path.pack(pady=5)
-        
-        self.entry_path = tk.Entry(frame_path, width=50)
-        self.entry_path.pack(side=tk.LEFT, padx=5)
-        
-        btn_browse = tk.Button(frame_path, text=self.lang["choose_folder"])
-        btn_browse.pack(side=tk.LEFT)
+    # Đường dẫn Telegram exe
+    frame_telegram_path = tk.Frame(root)
+    frame_telegram_path.pack(pady=5)
+    tk.Label(frame_telegram_path, text=lang["telegram_path_label"]).pack(side=tk.LEFT, padx=5)
+    telegram_path_entry.pack(in_=frame_telegram_path, side=tk.LEFT, padx=5)
 
-    def create_telegram_path_frame(self):
-        frame_telegram_path = tk.Frame(self.root)
-        frame_telegram_path.pack(pady=5)
-        
-        tk.Label(frame_telegram_path, text=self.lang["telegram_path_label"]).pack(side=tk.LEFT, padx=5)
-        self.telegram_path_entry = tk.Entry(frame_telegram_path, width=50)
-        self.telegram_path_entry.pack(side=tk.LEFT, padx=5)
+    # Nút lưu
+    btn_save = tk.Button(root, text=lang["save_path"], command=on_save_path, width=20)
+    btn_save.pack(pady=5)
 
-    def create_button_frames(self):
-        frame_buttons = tk.Frame(self.root)
-        frame_buttons.pack(pady=5)
-        
-        # First row
-        btn_login_all = tk.Button(frame_buttons, text=self.lang["login_all"], width=18)
-        btn_copy = tk.Button(frame_buttons, text=self.lang["copy_telegram"], width=18)
-        btn_open = tk.Button(frame_buttons, text=self.lang["open_telegram"], width=18)
-        
-        btn_login_all.grid(row=0, column=0, padx=5, pady=5)
-        btn_copy.grid(row=0, column=1, padx=5, pady=5)
-        btn_open.grid(row=0, column=2, padx=5, pady=5)
-        
-        # Second row
-        btn_close = tk.Button(frame_buttons, text=self.lang["close_telegram"], width=18)
-        btn_arrange = tk.Button(frame_buttons, text=self.lang["arrange_telegram"], width=18)
-        btn_auto_it = tk.Button(frame_buttons, text=self.lang["auto_it"], width=18)
-        
-        btn_close.grid(row=1, column=0, padx=5, pady=5)
-        btn_arrange.grid(row=1, column=1, padx=5, pady=5)
-        btn_auto_it.grid(row=1, column=2, padx=5, pady=5)
-        
-        # Third row
-        btn_check_live = tk.Button(frame_buttons, text=self.lang["check_live"], width=18)
-        btn_setting = tk.Button(frame_buttons, text="⚙️ Setting", width=18)
-        btn_update = tk.Button(frame_buttons, text=self.lang["check_update"], width=18)
-        
-        btn_check_live.grid(row=2, column=0, padx=5, pady=5)
-        btn_setting.grid(row=2, column=1, padx=5, pady=5)
-        btn_update.grid(row=2, column=2, padx=5, pady=5)
+    # Các nút thao tác chính
+    frame_buttons = tk.Frame(root)
+    frame_buttons.pack(pady=5)
+    btn_login_all = tk.Button(frame_buttons, text=lang["login_all"], command=on_login_all, width=18)
+    btn_copy = tk.Button(frame_buttons, text=lang["copy_telegram"], command=on_copy, width=18)
+    btn_open = tk.Button(frame_buttons, text=lang["open_telegram"], command=on_open, width=18)
+    btn_close = tk.Button(frame_buttons, text=lang["close_telegram"], command=on_close, width=18)
+    btn_arrange = tk.Button(frame_buttons, text=lang["arrange_telegram"], command=on_arrange, width=18)
+    btn_autoit = tk.Button(frame_buttons, text=lang["auto_it"], command=on_autoit, width=18)
+    btn_check_live = tk.Button(frame_buttons, text=lang["check_live"], command=on_check_live, width=18)
+    btn_setting = tk.Button(frame_buttons, text="⚙️ Setting", command=on_setting, width=18)
+    btn_update = tk.Button(frame_buttons, text=lang["check_update"], command=on_update, width=18)
 
-    def create_stats_frame(self):
-        frame_stats = tk.Frame(self.root)
-        frame_stats.pack(pady=10)
-        
-        label_stats = tk.Label(frame_stats, text=self.lang["stats_label"])
-        label_stats.pack()
-        
-        self.text_stats = tk.Text(frame_stats, width=70, height=10)
-        self.text_stats.pack()
+    # Gán vào grid (chia dòng/cột)
+    btn_login_all.grid(row=0, column=0, padx=5, pady=5)
+    btn_copy.grid(row=0, column=1, padx=5, pady=5)
+    btn_open.grid(row=0, column=2, padx=5, pady=5)
+    btn_close.grid(row=1, column=0, padx=5, pady=5)
+    btn_arrange.grid(row=1, column=1, padx=5, pady=5)
+    btn_autoit.grid(row=1, column=2, padx=5, pady=5)
+    btn_check_live.grid(row=2, column=0, padx=5, pady=5)
+    btn_setting.grid(row=2, column=1, padx=5, pady=5)
+    btn_update.grid(row=2, column=2, padx=5, pady=5)
 
-    def create_log_frame(self):
-        frame_log = tk.Frame(self.root)
-        frame_log.pack(pady=10)
-        
-        label_log = tk.Label(frame_log, text=self.lang["log_label"])
-        label_log.pack()
-        
-        self.text_log = tk.Text(frame_log, width=70, height=10)
-        self.text_log.pack() 
+    # Thống kê
+    frame_stats = tk.Frame(root)
+    frame_stats.pack(pady=10)
+    label_stats = tk.Label(frame_stats, text=lang["stats_label"])
+    label_stats.pack()
+    text_stats.pack(in_=frame_stats)
+    # Có thể bổ sung các widget khác: text_logged, text_log... (theo nhu cầu của bạn)
+
+    # Footer version
+    footer = tk.Label(root, text=VERSION_INFO, font=("Arial Unicode MS", 8))
+    footer.pack(side="bottom", fill="x", pady=5)
