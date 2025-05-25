@@ -81,6 +81,10 @@ from checklive.file import load_check_live_status_file, save_check_live_status_f
 import requests
 from distutils.version import LooseVersion
 
+
+
+
+
 # Thư viện để chuyển vào Thùng rác
 try:
     from send2trash import send2trash
@@ -101,6 +105,7 @@ from ctypes import wintypes
 
 # Import module AutoIT đã tách riêng
 from autoit_module import auto_it_function
+
 
 # ===== THÊM THƯ VIỆN BỔ SUNG CHO MINI CHAT =====
 # Consolog: Đã chuyển các import mini chat sang mini_chat.py
