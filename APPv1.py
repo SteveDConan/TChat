@@ -72,6 +72,10 @@ from checklive.marker import show_marker_selection_popup, load_marker_config, sa
 from checklive.compare import capture_window
 from checklive.file import load_check_live_status_file, save_check_live_status_file
 
+
+# Import module vocab_reader
+from vocab_reader import open_vocab_reader, close_vocab_reader
+
 # ==============================
 # CẤU HÌNH ỨNG DỤNG - BIẾN TOÀN CỤC
 # ==============================
@@ -1268,6 +1272,25 @@ def init_main_ui():
     label_stats.pack()
     text_stats = tk.Text(frame_stats, width=70, height=10)
     text_stats.pack()
+    
+    # Nút vocab_reader
+    btn_read_vocab = tk.Button(frame_buttons, text="Read", width=18)
+    btn_read_vocab.grid(row=3, column=0, padx=5, pady=5)
+    btn_read_vocab.active = False  # Khởi tạo trạng thái active
+    
+    # Trạng thái bật/tắt:
+    def toggle_vocab_reader():
+        if btn_read_vocab.active:
+            close_vocab_reader()
+            btn_read_vocab.config(relief=tk.RAISED)
+            btn_read_vocab.active = False
+        else:
+            open_vocab_reader(root)  # hoặc truyền path json và width nếu muốn
+            btn_read_vocab.config(relief=tk.SUNKEN)
+            btn_read_vocab.active = True
+
+    btn_read_vocab.config(command=toggle_vocab_reader)  # Gán command ban đầu
+    
 
     # Tổng kết
     frame_summary = tk.Frame(root)
