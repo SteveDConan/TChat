@@ -207,17 +207,23 @@ def toggle_mini_chat_pause():
 
 # Mini chat ô to
 def create_mini_chat():
+    """
+    Tạo mini chat và bắt đầu theo dõi cửa sổ Telegram
+    """
     global mini_chat_win, mini_chat_text, mini_chat_entry
     global TARGET_LANG_SELECTION, MY_LANG_SELECTION, DPI_ENABLED, mini_chat_pause_button
 
     if root is None:
-        print(
-            "Consolog [ERROR]: root chưa được set trong mini chat. Gọi set_root(root) trước khi tạo mini chat."
-        )
+        print("Consolog [ERROR]: root chưa được set trong mini chat. Gọi set_root(root) trước khi tạo mini chat.")
         return
 
+    # Tạo cửa sổ mini chat
     mini_chat_win = tk.Toplevel(root)
     mini_chat_win.title("Mini Chat")
+    mini_chat_win.attributes("-topmost", True)
+    
+    # Ban đầu ẩn cửa sổ
+    mini_chat_win.withdraw()
 
     # Vị trí cửa sổ
     screen_width = root.winfo_screenwidth()
@@ -312,7 +318,10 @@ def create_mini_chat():
     # Khởi động thread theo dõi inactivity
     threading.Thread(target=mini_chat_inactivity_monitor, daemon=True).start()
 
-    print("Consolog: Đã khởi tạo Mini Chat với dropdown hiển thị tên ngôn ngữ đầy đủ.")
+    # Bắt đầu thread theo dõi cửa sổ Telegram
+    threading.Thread(target=track_telegram_window, daemon=True).start()
+    
+    print("Consolog: Đã khởi tạo Mini Chat và bắt đầu theo dõi cửa sổ Telegram")
 
 
 def clear_mini_chat():
@@ -1005,27 +1014,17 @@ def create_mini_chatgpt():
     global target_lang_display_var  # <-- biến toàn cục hiển thị ngôn ngữ đích
 
     if root is None:
-        print(
-            "Consolog [ERROR]: root chưa được set. Gọi set_root(root) trước khi tạo widget mini chatgpt."
-        )
+        print("Consolog [ERROR]: root chưa được set. Gọi set_root(root) trước khi tạo widget mini chatgpt.")
         return
 
     # --- 1. Tạo cửa sổ toplevel ---
     mini_chatgpt_win = tk.Toplevel(root)
     mini_chatgpt_win.title("Mini ChatGPT Widget")
     mini_chatgpt_win.overrideredirect(True)
-    mini_chatgpt_win.attributes("-topmost", False)
-
-    widget_width, widget_height = 400, 40
-    # Đặt widget sát mép trên của cửa sổ Telegram, cách trái 1px
-    root.update_idletasks()
-    tele_x = 1
-    tele_y = root.winfo_rooty()
-    mini_chatgpt_win.geometry(f"{widget_width}x{widget_height}+{tele_x}+{tele_y}")
+    mini_chatgpt_win.attributes("-topmost", True)
+    
+    # Ban đầu ẩn cửa sổ
     mini_chatgpt_win.withdraw()
-    print(
-        "Consolog: Widget mini chatgpt được khởi tạo và ẩn do chưa phát hiện được HWND của Telegram."
-    )
 
     # --- 2. Frame chứa toàn bộ các widget chức năng ---
     frame = tk.Frame(mini_chatgpt_win)
@@ -1073,23 +1072,15 @@ def create_mini_chatgpt():
 
     # --- 6. Nút Send ---
     btn_send = tk.Button(frame, text="Send", command=send_mini_chatgpt_message)
-    btn_send.grid(row=0, column=3, padx=4, pady=4)
-    btn_send.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4)
+    btn_send.grid(row=0, column=3, padx=4, pady=2)
+    btn_send.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=2)
 
     # --- 7. Nút Quit ---
     btn_quit = tk.Button(frame, text="x", command=destroy_mini_chatgpt)
-    btn_quit.grid(row=0, column=4, padx=4, pady=4)
-    btn_quit.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4)
+    btn_quit.grid(row=0, column=4, padx=4, pady=2)
+    btn_quit.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=2)
 
-    # # Nếu muốn thêm nút Zoom, mở comment này
-    # btn_zoom = tk.Button(frame, text="Zoom", command=toggle_mini_chat_zoom)
-    # btn_zoom.grid(row=0, column=5, padx=4, pady=4)
-    # btn_zoom.config(bd=1, relief="solid", font=("Segoe UI", 9), padx=4, pady=4)
-    # mini_chatgpt_pause_button = btn_zoom
-
-    print(
-        "Consolog: Đã tạo widget mini chatgpt với học từ vựng, ô nhập, dropdown, nút Send, Quit."
-    )
+    print("Consolog: Đã tạo widget mini chatgpt với học từ vựng, ô nhập, dropdown, nút Send, Quit.")
 
     # --- 8. Tự động cập nhật vị trí widget bám theo cửa sổ Telegram ---
     threading.Thread(target=update_mini_chatgpt_position, daemon=True).start()
@@ -1147,23 +1138,32 @@ def send_mini_chatgpt_message():
 # ========================
 # [MODIFIED]: Hàm destroy_mini_chatgpt được chỉnh sửa theo yêu cầu
 # Khi destroy_mini_chatgpt() được gọi, ngoài đóng widget mini chatgpt thì sẽ:
-#   - Gọi destroy_mini_chat() để tắt cửa sổ mini chat
+#   - Gọi destroy_mini_chat để tắt cửa sổ mini chat
 #   - Đặt biến cờ widget_mini_chat_thread_running = False để dừng thread cập nhật vị trí widget mini chatgpt
 # ========================
 def destroy_mini_chatgpt():
-    global mini_chatgpt_win, widget_mini_chat_thread_running
+    """
+    Đóng widget mini chatgpt và mini chat
+    """
+    global mini_chatgpt_win, mini_chat_win, widget_mini_chat_thread_running, mini_chat_visible
+    
     print("Consolog: Đang tiến hành destroy_mini_chatgpt()...")
-    # Gọi hàm destroy_mini_chat để đóng cửa sổ mini chat (nếu đang mở)
-    destroy_mini_chat()
-    # Đặt cờ để dừng thread của widget mini chatgpt
+    
+    # Đặt cờ để dừng thread theo dõi cửa sổ Telegram
     widget_mini_chat_thread_running = False
-    print(
-        "Consolog: Đã đặt widget_mini_chat_thread_running = False để dừng các thread liên quan đến widget mini chat."
-    )
+    mini_chat_visible = False
+    
+    # Đóng cửa sổ mini chat
+    if mini_chat_win is not None:
+        mini_chat_win.destroy()
+        mini_chat_win = None
+        
+    # Đóng cửa sổ mini chatgpt
     if mini_chatgpt_win is not None:
         mini_chatgpt_win.destroy()
         mini_chatgpt_win = None
-        print("Consolog: Widget mini chatgpt đã bị đóng.")
+        
+    print("Consolog: Đã đóng mini chat và mini chatgpt")
 
 
 def update_mini_chatgpt_position():
@@ -1245,3 +1245,105 @@ def toggle_mini_chat_zoom():
 # ========================
 # KẾT THÚC: Các thay đổi đã bổ sung theo yêu cầu
 # ========================
+
+# Biến toàn cục để theo dõi cửa sổ Telegram
+telegram_window_hwnd = None
+mini_chat_visible = False
+
+def track_telegram_window():
+    """
+    Theo dõi cửa sổ Telegram và tự động hiển thị/ẩn mini chat
+    """
+    global telegram_window_hwnd, mini_chat_visible
+    
+    while True:
+        try:
+            # Tìm cửa sổ Telegram đang active
+            hwnd = get_correct_telegram_hwnd()
+            
+            if hwnd != telegram_window_hwnd:
+                # Cửa sổ Telegram thay đổi
+                telegram_window_hwnd = hwnd
+                
+                if hwnd is not None:
+                    # Có cửa sổ Telegram -> hiển thị mini chat
+                    if not mini_chat_visible:
+                        show_mini_chat()
+                        mini_chat_visible = True
+                else:
+                    # Không có cửa sổ Telegram -> ẩn mini chat
+                    if mini_chat_visible:
+                        hide_mini_chat()
+                        mini_chat_visible = False
+            
+            # Cập nhật vị trí mini chat nếu đang hiển thị
+            if mini_chat_visible and hwnd is not None:
+                update_mini_chat_position(hwnd)
+                
+            time.sleep(0.5)  # Kiểm tra mỗi 0.5 giây
+            
+        except Exception as e:
+            print(f"Consolog [ERROR]: Lỗi trong track_telegram_window: {e}")
+            time.sleep(1)
+
+def show_mini_chat():
+    """
+    Hiển thị mini chat và cập nhật vị trí
+    """
+    global mini_chat_win, mini_chatgpt_win
+    
+    if mini_chat_win is None:
+        create_mini_chat()
+    else:
+        mini_chat_win.deiconify()
+        
+    if mini_chatgpt_win is None:
+        create_mini_chatgpt()
+    else:
+        mini_chatgpt_win.deiconify()
+        
+    print("Consolog: Mini chat đã được hiển thị")
+
+def hide_mini_chat():
+    """
+    Ẩn mini chat
+    """
+    global mini_chat_win, mini_chatgpt_win
+    
+    if mini_chat_win is not None:
+        mini_chat_win.withdraw()
+        
+    if mini_chatgpt_win is not None:
+        mini_chatgpt_win.withdraw()
+        
+    print("Consolog: Mini chat đã được ẩn")
+
+def update_mini_chat_position(telegram_hwnd):
+    """
+    Cập nhật vị trí mini chat dựa trên vị trí cửa sổ Telegram
+    """
+    global mini_chat_win, mini_chatgpt_win
+    
+    try:
+        # Lấy vị trí và kích thước cửa sổ Telegram
+        rect = wintypes.RECT()
+        user32.GetWindowRect(telegram_hwnd, ctypes.byref(rect))
+        
+        # Cập nhật vị trí mini chat chính
+        if mini_chat_win is not None:
+            width = 530
+            height = 350
+            x = rect.right - width - 10
+            y = rect.bottom - height - 10
+            mini_chat_win.geometry(f"{width}x{height}+{x}+{y}")
+            
+        # Cập nhật vị trí mini chat widget
+        if mini_chatgpt_win is not None:
+            widget_width = 400
+            widget_height = 40
+            x = rect.left + 1
+            y = rect.bottom - widget_height - 1
+            mini_chatgpt_win.geometry(f"{widget_width}x{widget_height}+{x}+{y}")
+            
+    except Exception as e:
+        print(f"Consolog [ERROR]: Lỗi cập nhật vị trí mini chat: {e}")
