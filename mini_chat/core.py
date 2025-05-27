@@ -23,6 +23,7 @@ import re  # Consolog: Thêm import re để trích xuất thông tin ngôn ng�
 # Import components
 from .vocab_widget import VocabWidget
 
+
 # Consolog: Thêm import psutil để nhận diện tiến trình Telegram
 try:
     import psutil
@@ -1031,7 +1032,7 @@ def destroy_mini_chat():
     global mini_chat_win, mini_chat_on_close_callback
     if mini_chat_win is not None:
         try:
-            # Khi gọi destroy từ code cũng phải gọi callback để đồng bộ trạng thái UI ngoài
+            # Khi gọi destroy từ code cũ cũng phải gọi callback để đồng bộ trạng thái UI ngoài
             if mini_chat_on_close_callback:
                 mini_chat_on_close_callback()
         except Exception:

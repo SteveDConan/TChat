@@ -10,6 +10,7 @@ import subprocess
 import asyncio
 import math
 import ctypes
+from ctypes import wintypes
 import threading
 import re
 import random
