@@ -1190,6 +1190,8 @@ def on_closing():
 def init_main_ui():
     """
     Khởi tạo giao diện chính của ứng dụng, các nút chức năng chính/phụ, bảng thống kê, log, footer...
+    Mini Chat lớn sẽ chỉ được bật/tắt bằng nút "Mini Chat-L", luôn đồng bộ trạng thái với cửa sổ.
+    Mini Chat nhỏ vẫn tự động như trước.
     """
     global root, entry_path, text_stats, text_logged, text_summary, text_log, telegram_path_entry
 
@@ -1265,6 +1267,53 @@ def init_main_ui():
     btn_setting.grid(row=2, column=1, padx=5, pady=5)
     btn_update.grid(row=2, column=2, padx=5, pady=5)
 
+    # Nút vocab_reader
+    btn_read_vocab = tk.Button(frame_buttons, text="Read", width=18)
+    btn_read_vocab.grid(row=3, column=0, padx=5, pady=5)
+    btn_read_vocab.active = False  # Khởi tạo trạng thái active
+
+    # Trạng thái bật/tắt vocab_reader
+    def toggle_vocab_reader():
+        if btn_read_vocab.active:
+            close_vocab_reader()
+            btn_read_vocab.config(relief=tk.RAISED)
+            btn_read_vocab.active = False
+        else:
+            open_vocab_reader(root)
+            btn_read_vocab.config(relief=tk.SUNKEN)
+            btn_read_vocab.active = True
+
+    btn_read_vocab.config(command=toggle_vocab_reader)
+
+    # ====== Mini Chat-L (LỚN) ĐỒNG BỘ HÓA TRẠNG THÁI ======
+    mini_chat_l_active = {"status": False}
+
+    from mini_chat import (
+        set_root,
+        set_mini_chat_globals,
+        create_mini_chat,
+        destroy_mini_chat,
+        create_mini_chatgpt,
+        start_mini_chat_monitor
+    )
+
+    def on_mini_chat_l_closed():
+        # Callback khi cửa sổ Mini Chat-L bị đóng (bởi user hoặc code)
+        mini_chat_l_active["status"] = False
+        btn_mini_chat_l.config(relief=tk.RAISED, text="Mini Chat-L")
+
+    def toggle_mini_chat_l():
+        if mini_chat_l_active["status"]:
+            destroy_mini_chat()
+            # Khi destroy_mini_chat gọi xong sẽ tự callback lại nút
+        else:
+            create_mini_chat(on_close=on_mini_chat_l_closed)  # Truyền callback này vào mini_chat.py
+            btn_mini_chat_l.config(relief=tk.SUNKEN, text="Tắt Mini Chat-L")
+            mini_chat_l_active["status"] = True
+
+    btn_mini_chat_l = tk.Button(frame_buttons, text="Mini Chat-L", width=18, command=toggle_mini_chat_l)
+    btn_mini_chat_l.grid(row=3, column=1, padx=5, pady=5)
+
     # Thống kê
     frame_stats = tk.Frame(root)
     frame_stats.pack(pady=10)
@@ -1273,25 +1322,6 @@ def init_main_ui():
     text_stats = tk.Text(frame_stats, width=70, height=10)
     text_stats.pack()
     
-    # Nút vocab_reader
-    btn_read_vocab = tk.Button(frame_buttons, text="Read", width=18)
-    btn_read_vocab.grid(row=3, column=0, padx=5, pady=5)
-    btn_read_vocab.active = False  # Khởi tạo trạng thái active
-    
-    # Trạng thái bật/tắt:
-    def toggle_vocab_reader():
-        if btn_read_vocab.active:
-            close_vocab_reader()
-            btn_read_vocab.config(relief=tk.RAISED)
-            btn_read_vocab.active = False
-        else:
-            open_vocab_reader(root)  # hoặc truyền path json và width nếu muốn
-            btn_read_vocab.config(relief=tk.SUNKEN)
-            btn_read_vocab.active = True
-
-    btn_read_vocab.config(command=toggle_vocab_reader)  # Gán command ban đầu
-    
-
     # Tổng kết
     frame_summary = tk.Frame(root)
     frame_summary.pack(pady=10)
@@ -1327,24 +1357,18 @@ def init_main_ui():
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
 
-    # Khởi tạo mini chat
-    print("Consolog: Moved mini chat code to mini_chat.py")
-    from mini_chat import (
-        set_root,
-        set_mini_chat_globals,
-        create_mini_chat,
-        create_mini_chatgpt,
-        start_mini_chat_monitor
-    )
+    # ======= KHỞI ĐỘNG MINI CHAT NHỎ (GẮN TELEGRAM) ========
     set_root(root)
     set_mini_chat_globals(CHATGPT_API_KEY, TRANSLATION_ONLY, DEFAULT_TARGET_LANG)
-    create_mini_chat()
-    print("Consolog: Mini Chat lớn đã được khởi tạo tự động.")
+    # KHÔNG khởi động mini chat lớn ở đây!
     create_mini_chatgpt()
     print("Consolog: Widget Mini Chat nhỏ (gắn vào cửa sổ Telegram) đã được khởi tạo tự động.")
     start_mini_chat_monitor()
     print("Consolog: Giao diện chính được khởi tạo thành công.")
+
     root.mainloop()
+
+
 
 # ======== HẾT PHẦN 5/6 ========
 

@@ -70,6 +70,9 @@ print(
     "Consolog: Đã khởi tạo biến widget_mini_chat_thread_running = True để quản lý thread widget mini chat."
 )
 
+# Mini chat ô to - thêm tham số on_close và lưu callback
+mini_chat_on_close_callback = None
+
 # ----- module-level, đặt ngay dưới import tkinter as tk, threading, … -----
 LANG_CODE_TO_NAME = {
     "en": "English",      
@@ -206,24 +209,37 @@ def toggle_mini_chat_pause():
 
 
 # Mini chat ô to
-def create_mini_chat():
+def create_mini_chat(on_close=None):
     """
     Tạo mini chat và bắt đầu theo dõi cửa sổ Telegram
+    Nếu có on_close callback, sẽ gọi khi cửa sổ bị đóng (bất kể bằng X hay gọi destroy).
     """
     global mini_chat_win, mini_chat_text, mini_chat_entry
     global TARGET_LANG_SELECTION, MY_LANG_SELECTION, DPI_ENABLED, mini_chat_pause_button
+    global mini_chat_on_close_callback
+    
+    # Nếu đã có cửa sổ và nó chưa bị destroy thì chỉ cần show lại, không tạo mới
+    if mini_chat_win is not None and tk.Toplevel.winfo_exists(mini_chat_win):
+        try:
+            mini_chat_win.lift()
+            mini_chat_win.deiconify()
+            return
+        except Exception:
+            pass
+    
+    mini_chat_on_close_callback = on_close
 
     if root is None:
         print("Consolog [ERROR]: root chưa được set trong mini chat. Gọi set_root(root) trước khi tạo mini chat.")
         return
+    
+    
 
-    # Tạo cửa sổ mini chat
+
     mini_chat_win = tk.Toplevel(root)
     mini_chat_win.title("Mini Chat")
     mini_chat_win.attributes("-topmost", True)
-    
-    # Ban đầu ẩn cửa sổ
-    mini_chat_win.withdraw()
+    mini_chat_win.protocol("WM_DELETE_WINDOW", on_mini_chat_closed)
 
     # Vị trí cửa sổ
     screen_width = root.winfo_screenwidth()
@@ -233,6 +249,19 @@ def create_mini_chat():
     y = screen_height - height - 10
     mini_chat_win.geometry(f"{width}x{height}+{x}+{y}")
     mini_chat_win.attributes("-topmost", True)
+    
+        # Định nghĩa callback khi đóng cửa sổ (dùng X trên góc)
+    def _on_close():
+        global mini_chat_win
+        if mini_chat_on_close_callback:
+            mini_chat_on_close_callback()
+        try:
+            mini_chat_win.destroy()
+        except Exception:
+            pass
+        mini_chat_win = None
+
+    mini_chat_win.protocol("WM_DELETE_WINDOW", _on_close)
 
     # --- MENU CHỌN NGÔN NGỮ & DPI ---
     menu_frame = tk.Frame(mini_chat_win)
@@ -341,6 +370,33 @@ def append_mini_chat(text):
     mini_chat_text.insert(tk.END, text + "\n")
     mini_chat_text.see(tk.END)
     mini_chat_text.config(state=tk.DISABLED)
+    
+    
+ # Đặt vị trí cửa sổ:
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    width, height = 530, 350
+    x = screen_width - width - 10
+    y = screen_height - height - 10
+    mini_chat_win.geometry(f"{width}x{height}+{x}+{y}")
+
+    mini_chat_win.deiconify()
+    mini_chat_win.lift()
+    print("Consolog: Đã khởi tạo Mini Chat-L.")
+
+def on_mini_chat_closed():
+    """Đóng Mini Chat-L và reset biến, gọi callback đồng bộ UI."""
+    global mini_chat_win, mini_chat_on_close_callback
+    if mini_chat_win is not None:
+        try:
+            mini_chat_win.destroy()
+        except Exception:
+            pass
+        mini_chat_win = None
+    if mini_chat_on_close_callback:
+        mini_chat_on_close_callback()
+        mini_chat_on_close_callback = None
+    print("Consolog: Mini Chat-L đã đóng và reset biến.")
 
 
 # -----------------------------------------------
@@ -971,9 +1027,19 @@ def save_config():
 
 # Consolog: Bổ sung hàm destroy_mini_chat() để đóng cửa sổ mini chat
 def destroy_mini_chat():
-    global mini_chat_win
+    on_mini_chat_closed()
+    global mini_chat_win, mini_chat_on_close_callback
     if mini_chat_win is not None:
-        mini_chat_win.destroy()
+        try:
+            # Khi gọi destroy từ code cũng phải gọi callback để đồng bộ trạng thái UI ngoài
+            if mini_chat_on_close_callback:
+                mini_chat_on_close_callback()
+        except Exception:
+            pass
+        try:
+            mini_chat_win.destroy()
+        except Exception:
+            pass
         mini_chat_win = None
         print("Consolog: Mini chat window has been destroyed.")
 

@@ -7,7 +7,8 @@ from .core import (
     set_mini_chat_globals,
     create_mini_chat,
     create_mini_chatgpt,
-    start_mini_chat_monitor
+    start_mini_chat_monitor,
+    destroy_mini_chat
 )
 
 __version__ = '1.0.0' 
