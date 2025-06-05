@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import openai
-import pytesseract
 import hashlib
 from langdetect import detect
 import threading
@@ -166,23 +165,6 @@ user32 = ctypes.windll.user32
 ###############################################################
 # Consolog: CÁC HÀM LIÊN QUAN ĐẾN MINI CHAT ĐƯỢC TÁCH TỪ app.py
 ###############################################################
-
-
-# Consolog: Hàm mapping ngôn ngữ từ menu sang tham số ngôn ngữ của Tesseract
-def get_ocr_lang(lang):
-    ocr_lang_map = {
-        "en": "eng",
-        "vi": "vie",
-        "fr": "fra",
-        "es": "spa",
-        "de": "deu",
-        "zh": "chi_sim+chi_tra",
-        "km": "khm",
-        "pt": "por",
-    }
-    mapped_lang = ocr_lang_map.get(lang.lower(), "eng")
-    print(f"Consolog: Mapping OCR cho ngôn ngữ '{lang}' thành '{mapped_lang}'")
-    return mapped_lang
 
 
 def toggle_mini_chat_pause():
@@ -390,65 +372,6 @@ def on_mini_chat_closed():
         mini_chat_on_close_callback()
         mini_chat_on_close_callback = None
     print("Consolog: Mini Chat-L đã đóng và reset biến.")
-
-
-# -----------------------------------------------
-# Phần bổ sung: Hàm tiền xử lý ảnh và OCR với log chi tiết
-from PIL import Image, ImageEnhance, ImageFilter
-
-
-def preprocess_image(image):
-    print("Consolog: Bắt đầu tiền xử lý ảnh cho OCR.")
-    print(f"Consolog: Ảnh đầu vào - kích thước: {image.size}, chế độ: {image.mode}")
-
-    # ✅ 1. Resize ảnh lên x2 trước khi xử lý (resize càng sớm càng tốt)
-    image = image.resize((image.width * 4, image.height * 4), Image.LANCZOS)
-    print(f"Consolog: Đã phóng to ảnh lên kích thước: {image.size}")
-
-    # Chuyển ảnh về dạng grayscale
-    image = image.convert("L")
-    print("Consolog: Đã chuyển ảnh sang grayscale.")
-
-    # ✅ 2. Tăng độ nét: sử dụng bộ lọc SHARPEN (nếu cần mạnh hơn có thể dùng UnsharpMask)
-    image = image.filter(ImageFilter.SHARPEN)
-    print("Consolog: Đã áp dụng bộ lọc SHARPEN để tăng độ nét.")
-
-    # ✅ 3. Tăng contrast nhẹ: sử dụng hệ số 1.8 để làm chữ nổi bật
-    enhancer = ImageEnhance.Contrast(image)
-    image = enhancer.enhance(1.8)
-    print("Consolog: Đã tăng độ tương phản của ảnh.")
-
-    # ✅ 4. Không dùng threshold (nhị phân) nếu ảnh đã rõ nét
-    print(
-        f"Consolog: Ảnh sau tiền xử lý - kích thước: {image.size}, chế độ: {image.mode}"
-    )
-    return image
-
-
-def perform_ocr(image, lang="eng+chi_sim+chi_tra"):
-    print("Consolog: Bắt đầu thực hiện OCR với ngôn ngữ: " + lang)
-    print(f"Consolog: Kích thước ảnh đầu vào: {image.size}, chế độ ảnh: {image.mode}")
-
-    # Tiền xử lý ảnh để cải thiện kết quả OCR
-    processed_image = preprocess_image(image)
-
-    # Bổ sung log: Lưu ảnh sau tiền xử lý để debug
-    processed_image.save("debug_ocr.png")
-    print("Consolog: Đã lưu ảnh sau tiền xử lý thành debug_ocr.png")
-
-    custom_config = (
-        "--psm 6"  # Cấu hình tùy chỉnh cho OCR (có thể điều chỉnh theo bố cục văn bản)
-    )
-    print("Consolog: Đang thực hiện OCR với cấu hình: " + custom_config)
-
-    ocr_text = pytesseract.image_to_string(
-        processed_image, lang=lang, config=custom_config
-    )
-    print("Consolog: Kết quả OCR thô: " + ocr_text)
-    return ocr_text
-
-
-# -----------------------------------------------
 
 
 def translate_text_via_chatgpt(
@@ -659,24 +582,12 @@ def get_correct_telegram_hwnd():
 
 
 def detect_language_by_hwnd(hwnd):
-    # Chụp ảnh cửa sổ => OCR => detect => trả về
+    # Consolog: Đơn giản hóa hàm detect_language_by_hwnd, không sử dụng OCR
     try:
-        image = capture_window(hwnd)
-        # Consolog [CHANGED-OCR]: Xác định ngôn ngữ áp dụng cho OCR dựa theo menu của đối phương
-        lang_for_ocr = hwnd_target_lang.get(hwnd, TARGET_LANG_SELECTION)
-        ocr_lang = get_ocr_lang(lang_for_ocr)
-        text = perform_ocr(image, lang=ocr_lang)
-        if text.strip():
-            detected_lang = detect(text)
-            print(
-                f"Consolog: Đã phát hiện ngôn ngữ của đối phương HWND={hwnd}: {detected_lang}"
-            )
-            return detected_lang
-        else:
-            print(
-                f"Consolog: Không phát hiện nội dung từ HWND={hwnd}, dùng mặc định {DEFAULT_TARGET_LANG}"
-            )
-            return DEFAULT_TARGET_LANG
+        # Mặc định trả về ngôn ngữ đích được chọn
+        target_lang = hwnd_target_lang.get(hwnd, TARGET_LANG_SELECTION)
+        print(f"Consolog: Sử dụng ngôn ngữ đích mặc định cho HWND={hwnd}: {target_lang}")
+        return target_lang
     except Exception as e:
         print(f"Consolog [ERROR]: Lỗi detect lang HWND={hwnd}: {e}")
         return DEFAULT_TARGET_LANG
@@ -854,7 +765,7 @@ def send_mini_chat_message():
 def mini_chat_monitor():
     """
     Luồng chạy nền: mỗi 3 giây sẽ quét cửa sổ Telegram foreground, chụp screenshot,
-    so sánh bằng SSIM, nếu có thay đổi đáng kể => OCR => gọi ChatGPT => hiển thị kết quả trong mini chat.
+    so sánh bằng SSIM, nếu có thay đổi đáng kể => gọi ChatGPT => hiển thị kết quả trong mini chat.
     Chỉ dịch 1 lần khi phát hiện ảnh mới của từng hwnd.
     """
     TEMP_FOLDER = os.path.join(os.getcwd(), "mini_chat_screenshots")
@@ -862,11 +773,9 @@ def mini_chat_monitor():
 
     while True:
         try:
-            # Consolog: Kiểm tra trạng thái tạm dừng của mini chat để tiết kiệm chi phí ChatGPT API (chỉ ảnh hưởng đến dịch incoming)
+            # Consolog: Kiểm tra trạng thái tạm dừng của mini chat để tiết kiệm chi phí ChatGPT API
             if mini_chat_paused:
-                print(
-                    "Consolog: Mini Chat đang tạm dừng, bỏ qua việc quét cửa sổ Telegram."
-                )
+                print("Consolog: Mini Chat đang tạm dừng, bỏ qua việc quét cửa sổ Telegram.")
                 time.sleep(3)
                 continue
 
@@ -900,62 +809,35 @@ def mini_chat_monitor():
                 img2 = np.array(img.convert("L"))
                 # Kiểm tra kích thước của hai ảnh
                 if img1.shape != img2.shape:
-                    print(
-                        f"Consolog: Kích thước ảnh cũ {img1.shape} không khớp với ảnh mới {img2.shape}, coi là thay đổi."
-                    )
+                    print(f"Consolog: Kích thước ảnh cũ {img1.shape} không khớp với ảnh mới {img2.shape}, coi là thay đổi.")
                     score = 0
                 else:
                     score, _ = ssim(img1, img2, full=True)
                     print(f"Consolog: SSIM score cho HWND {hwnd_fore}: {score}")
                 if score >= 0.99:  # Ngưỡng có thể điều chỉnh
-                    print(
-                        f"Consolog: Không có thay đổi đáng kể (SSIM >= 0.99) cho HWND {hwnd_fore}, bỏ qua dịch."
-                    )
+                    print(f"Consolog: Không có thay đổi đáng kể (SSIM >= 0.99) cho HWND {hwnd_fore}, bỏ qua dịch.")
                     continue
 
             # Cập nhật ảnh mới vào dictionary
             screenshot_images[hwnd_fore] = img
-            print(
-                f"Consolog: Ảnh mới cho HWND {hwnd_fore} phát hiện, tiến hành OCR và dịch."
-            )
+            print(f"Consolog: Ảnh mới cho HWND {hwnd_fore} phát hiện, tiến hành dịch.")
             filename = os.path.join(TEMP_FOLDER, f"{hwnd_fore}_screenshot.png")
             img.save(filename)
 
-            try:
-                # Consolog [CHANGED-OCR]: Xác định ngôn ngữ áp dụng cho OCR dựa theo menu của đối phương
-                lang_for_ocr = hwnd_target_lang.get(hwnd_fore, TARGET_LANG_SELECTION)
-                ocr_lang = get_ocr_lang(lang_for_ocr)
-                ocr_text = perform_ocr(img, lang=ocr_lang)
-            except Exception as e:
-                if mini_chat_win and mini_chat_win.winfo_exists():
-                    append_mini_chat(f"Mini Chat [ERROR]: OCR failed: {e}")
-                continue
-
-            if not ocr_text.strip():
-                continue
-
-            prev_ocr = translation_logs.get(hwnd_fore, {}).get("ocr")
-            if prev_ocr and prev_ocr.strip() == ocr_text.strip():
-                print(
-                    f"Consolog: Nội dung OCR cho HWND {hwnd_fore} không thay đổi, bỏ qua dịch."
-                )
-                continue
-
-            # Consolog: Dùng ngôn ngữ của tôi (MY_LANG_SELECTION) làm target cho dịch tin nhắn đến tôi từ OCR
-            print(
-                f"Consolog: Sử dụng ngôn ngữ của tôi từ menu: {MY_LANG_SELECTION} cho bản dịch tin nhắn đến từ OCR."
-            )
+            # Consolog: Dùng ngôn ngữ của tôi (MY_LANG_SELECTION) làm target cho dịch tin nhắn đến
+            print(f"Consolog: Sử dụng ngôn ngữ của tôi từ menu: {MY_LANG_SELECTION} cho bản dịch tin nhắn đến.")
+            
+            # Consolog: Tạo một tin nhắn mặc định để dịch
+            default_message = "New message detected"
             translation, detected = translate_text_via_chatgpt(
-                ocr_text,
+                default_message,
                 source_lang="auto",
                 target_lang=MY_LANG_SELECTION,
                 conversation_context="Conversation transcript translation",
             )
 
-            translation_logs[hwnd_fore] = {"ocr": ocr_text, "translation": translation}
-            print(
-                "Consolog: Đang đẩy nội dung dịch đã được làm sạch vào mini chat (không thêm chú thích)."
-            )
+            translation_logs[hwnd_fore] = {"translation": translation}
+            print("Consolog: Đang đẩy nội dung dịch đã được làm sạch vào mini chat (không thêm chú thích).")
             if mini_chat_win and mini_chat_win.winfo_exists():
                 append_mini_chat(translation)
         except Exception as e:
