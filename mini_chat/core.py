@@ -468,8 +468,8 @@ def translate_text_via_chatgpt(
         return text, None
 
     try:
-        openai.api_key = CHATGPT_API_KEY
-
+        from openai import OpenAI
+        client = OpenAI(api_key=CHATGPT_API_KEY)
         # Consolog: Tạo mapping từ mã ngôn ngữ sang tên tiếng Việt cho prompt
         lang_map = {
             "vi": "tiếng Việt",
@@ -485,9 +485,7 @@ def translate_text_via_chatgpt(
             "id": "tiếng Indonesia",  # Indonesia
             "yo": "tiếng Yoruba-Nigeria",       # Nigeria (local)
         }
-        # Dùng mapping nếu có, ngược lại giữ nguyên giá trị target_lang
         lang_name = lang_map.get(target_lang.lower(), target_lang)
-
         prompt = (
             f"Hãy chuyển ngữ đoạn văn dưới đây sang {lang_name} một cách chính xác, tự nhiên và sát nghĩa nhất, giống như khi ChatGPT dịch trực tiếp trên nền tảng web. "
             f"Trước khi dịch, **đọc kỹ câu chat và hiểu ngữ cảnh**: Xem câu chat đó đang nói về điều gì, hoàn cảnh như thế nào, và tìm cách dịch sao cho sát nghĩa nhất, "
@@ -502,35 +500,25 @@ def translate_text_via_chatgpt(
             f"Bối cảnh: {conversation_context}.\n\n"
             f"Chỉ in kết quả cuối cùng là văn bản đã chuyển ngữ."
         )
-
         print(
             "Consolog: Đã cập nhật prompt dịch theo yêu cầu mới (bao gồm chỉ dẫn xử lý câu lóng và địa phương):"
         )
         print(prompt)
-
-        # Consolog: [CHANGED] Sử dụng mô hình ChatGPT 4o thay vì gpt-3.5-turbo
         print("Consolog: Đang sử dụng mô hình ChatGPT 4o để thực hiện dịch.")
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5,
         )
-
-        # Truy xuất nội dung từ phản hồi ChatGPT
-        full_reply = response["choices"][0]["message"]["content"].strip()
+        full_reply = response.choices[0].message.content.strip()
         print(f"Consolog: Kết quả dịch thô từ ChatGPT: {full_reply}")
-
         detected_lang = None
-
-        # Loại bỏ các dòng chỉ dẫn không cần thiết nếu có
         new_full_reply = re.sub(
             r"^(Chuyển\s+ngữ\s+sang\s+.+?:\s*)", "", full_reply, flags=re.IGNORECASE
         )
         if new_full_reply != full_reply:
             print("Consolog: Đã loại bỏ dòng thừa từ phản hồi ChatGPT.")
             full_reply = new_full_reply
-
-        # Sử dụng regex để tìm header [Ngôn ngữ: ...] hoặc [Language: ...]
         matches = list(
             re.finditer(
                 r"\[(?:Ngôn\s*ngữ|Language):\s*(.*?)\]", full_reply, re.IGNORECASE
@@ -538,7 +526,6 @@ def translate_text_via_chatgpt(
         )
         if matches:
             detected_lang = matches[-1].group(1).strip()
-            # Loại bỏ header, chỉ lấy nội dung sau header cuối cùng
             translated_text = full_reply[matches[-1].end() :].strip()
             print(
                 f"Consolog: Phát hiện header ngôn ngữ, loại bỏ: {matches[-1].group(0)}"
@@ -546,12 +533,10 @@ def translate_text_via_chatgpt(
         else:
             translated_text = full_reply.strip()
             print("Consolog: Không phát hiện header ngôn ngữ trong phản hồi ChatGPT.")
-
         print("Consolog: Kết quả dịch đã được làm sạch:")
         print(translated_text)
         return translated_text, detected_lang
-
-    except openai.error.OpenAIError as e:
+    except openai.APIError as e:
         append_mini_chat(f"Mini Chat [ERROR]: OpenAI API error: {e}")
         return text, None
     except Exception as e:
