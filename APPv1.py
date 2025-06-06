@@ -91,7 +91,6 @@ from checklive.marker import (
 )
 from checklive.compare import capture_window
 from checklive.file import load_check_live_status_file, save_check_live_status_file
-from vocab_reader import open_vocab_reader, close_vocab_reader
 
 CHATGPT_API_KEY = load_chatgpt_api_key(CHATGPT_API_KEY_FILE)
 MARKER_IMAGE_PATH = os.path.join(os.getcwd(), "marker_image.png")
@@ -1200,21 +1199,6 @@ def init_main_ui():
     btn_check_live.grid(row=2, column=0, padx=5, pady=5)
     btn_setting.grid(row=2, column=1, padx=5, pady=5)
     btn_update.grid(row=2, column=2, padx=5, pady=5)
-    btn_read_vocab = tk.Button(frame_buttons, text="Read", width=18)
-    btn_read_vocab.grid(row=3, column=0, padx=5, pady=5)
-    btn_read_vocab.active = False
-
-    def toggle_vocab_reader():
-        if btn_read_vocab.active:
-            close_vocab_reader()
-            btn_read_vocab.config(relief=tk.RAISED)
-            btn_read_vocab.active = False
-        else:
-            open_vocab_reader(root)
-            btn_read_vocab.config(relief=tk.SUNKEN)
-            btn_read_vocab.active = True
-
-    btn_read_vocab.config(command=toggle_vocab_reader)
     mini_chat_l_active = {"status": False}
     from mini_chat import (
         set_root,
