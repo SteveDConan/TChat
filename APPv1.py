@@ -35,7 +35,6 @@ from telethon.errors import (
     PhoneCodeInvalidError,
     PhoneCodeExpiredError,
 )
-from autoit_module import auto_it_function
 
 from resources.languages import languages
 from resources.config import (
@@ -622,7 +621,6 @@ def warn_auto_it():
         "【中文】: 在启动 AutoIT 功能之前，我们强烈建议您先对所有 Telegram 账户进行实时检查。"
     )
     messagebox.showinfo("Khuyến cáo", warning_msg)
-    auto_it_function(root, entry_path, lang, get_tdata_folders)
 
 
 check_live_thread = None
@@ -1190,12 +1188,6 @@ def init_main_ui():
         command=lambda: arrange_telegram_windows(arrange_width, arrange_height),
         width=18,
     )
-    btn_auto_it = tk.Button(
-        frame_buttons, text=lang["auto_it"], command=warn_auto_it, width=18
-    )
-    btn_close.grid(row=1, column=0, padx=5, pady=5)
-    btn_arrange.grid(row=1, column=1, padx=5, pady=5)
-    btn_auto_it.grid(row=1, column=2, padx=5, pady=5)
     btn_check_live = tk.Button(
         frame_buttons,
         text=lang["check_live"],
@@ -1208,6 +1200,8 @@ def init_main_ui():
     btn_update = tk.Button(
         frame_buttons, text=lang["check_update"], command=check_for_updates, width=18
     )
+    btn_close.grid(row=1, column=0, padx=5, pady=5)
+    btn_arrange.grid(row=1, column=1, padx=5, pady=5)
     btn_check_live.grid(row=2, column=0, padx=5, pady=5)
     btn_setting.grid(row=2, column=1, padx=5, pady=5)
     btn_update.grid(row=2, column=2, padx=5, pady=5)
