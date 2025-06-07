@@ -1226,7 +1226,7 @@ try:
     from script_builder import ScriptBuilder
 except ImportError:
     ScriptBuilder = None
-    print("Consolog: Không tìm thấy script_builder.py hoặc lỗi import ScriptBuilder.")
+    print("Consolog: ScriptBuilder module không khả dụng - một số tính năng sẽ bị giới hạn")
     logging.error("Không tìm thấy script_builder.py hoặc lỗi import ScriptBuilder.")
 
 # ---------------------------

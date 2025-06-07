@@ -16,7 +16,7 @@ from tkinter import ttk
 import tkinter.font as tkFont
 from PIL import Image, ImageChops, ImageTk
 import requests
-from distutils.version import LooseVersion
+from packaging.version import Version
 
 try:
     from send2trash import send2trash
@@ -259,7 +259,7 @@ def check_for_updates():
         if response.status_code == 200:
             release_info = response.json()
             latest_version = release_info["tag_name"].lstrip("v")
-            if LooseVersion(latest_version) > LooseVersion(CURRENT_VERSION):
+            if Version(latest_version) > Version(CURRENT_VERSION):
                 if messagebox.askyesno(
                     "Cập nhật",
                     lang.get(
@@ -374,9 +374,21 @@ def save_path():
 def load_path():
     """Đọc đường dẫn từ file cấu hình."""
     if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            path = f.read().strip()
-            return path
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                path = f.read().strip()
+                return path
+        except UnicodeDecodeError:
+            try:
+                with open(CONFIG_FILE, "r", encoding="latin-1") as f:
+                    path = f.read().strip()
+                    return path
+            except Exception as e:
+                print(f"Lỗi đọc file cấu hình: {e}")
+                return ""
+        except Exception as e:
+            print(f"Lỗi đọc file cấu hình: {e}")
+            return ""
     return ""
 
 
