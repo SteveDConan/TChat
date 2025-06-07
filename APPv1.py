@@ -46,8 +46,6 @@ from resources.config import (
     CONFIG_FILE,
     WINDOW_SIZE_FILE,
     CHATGPT_API_KEY_FILE,
-    MARKER_IMAGE_PATH,
-    MARKER_CONFIG_FILE,
     DEFAULT_TELEGRAM_PATH,
     DEFAULT_TARGET_LANG,
     TRANSLATION_ONLY,
@@ -83,17 +81,8 @@ from cores.manager import (
     check_file_exists,
 )
 from cores.privacy import update_privacy_sync, run_update_privacy_multi
-from checklive.marker import (
-    show_marker_selection_popup,
-    load_marker_config,
-    save_marker_config,
-)
-from checklive.compare import capture_window
-from checklive.file import load_check_live_status_file, save_check_live_status_file
 
 CHATGPT_API_KEY = load_chatgpt_api_key(CHATGPT_API_KEY_FILE)
-MARKER_IMAGE_PATH = os.path.join(os.getcwd(), "marker_image.png")
-MARKER_CONFIG_FILE = os.path.join(os.getcwd(), "marker_config.txt")
 
 arrange_width = 500
 arrange_height = 504
@@ -122,19 +111,6 @@ def get_window_handle_by_pid(pid):
 
     user32.EnumWindows(enum_callback, 0)
     return handles[0] if handles else None
-
-
-def warn_check_live():
-    """Cảnh báo cần đóng Telegram trước khi check live."""
-    warning_msg = (
-        "【Tiếng Việt】: Để đảm bảo tính năng Check live hoạt động chính xác và hiệu quả, vui lòng đóng tất cả các phiên bản Telegram đang chạy trên máy tính của bạn. Bạn có muốn đóng chúng ngay bây giờ?\n"
-        "【English】: To ensure the Check live feature works accurately and efficiently, please close all running Telegram instances on your computer. Would you like to close them now?\n"
-        "【中文】: 为了确保 'Check live' 功能准确高效地运行，请关闭您电脑上所有正在运行的 Telegram 程序。您是否希望立即关闭它们？"
-    )
-    res = messagebox.askyesno("Cảnh báo", warning_msg)
-    if res:
-        close_all_telegram_threaded()
-    check_live_window()
 
 
 def close_all_telegram_threaded():
@@ -623,357 +599,6 @@ def warn_auto_it():
     messagebox.showinfo("Khuyến cáo", warning_msg)
 
 
-check_live_thread = None
-check_live_pause_event = threading.Event()
-check_live_status = {}
-confirm_done = False
-tdata_process_map = {}
-TEMP_SCREENSHOT_FOLDER = None
-
-
-def compare_screenshot_with_marker(screenshot, marker_image, threshold=20):
-    """So sánh ảnh chụp với marker image."""
-    if screenshot.size != marker_image.size:
-        marker_image = marker_image.resize(screenshot.size)
-    diff = ImageChops.difference(screenshot, marker_image)
-    h = diff.histogram()
-    sq = (value * ((idx % 256) ** 2) for idx, value in enumerate(h))
-    sum_sq = sum(sq)
-    rms = math.sqrt(sum_sq / (screenshot.size[0] * screenshot.size[1]))
-    return rms < threshold
-
-
-def screenshot_comparison_worker():
-    """So sánh ảnh chụp của tất cả cửa sổ Telegram với marker."""
-    time.sleep(2)
-    user32 = ctypes.windll.user32
-    captured_screenshots = {}
-    for tdata_name, pid_list in tdata_process_map.items():
-        window_handle = None
-        for pid in pid_list:
-            try:
-                hwnd = get_window_handle_by_pid(int(pid))
-            except Exception:
-                hwnd = None
-            if hwnd:
-                window_handle = hwnd
-                break
-        if window_handle:
-            try:
-                SW_RESTORE = 9
-                user32.ShowWindow(window_handle, SW_RESTORE)
-                user32.SetForegroundWindow(window_handle)
-                time.sleep(0.5)
-                rect = wintypes.RECT()
-                user32.GetWindowRect(window_handle, ctypes.byref(rect))
-                screenshot = capture_window(window_handle)
-                if screenshot and TEMP_SCREENSHOT_FOLDER:
-                    file_path = os.path.join(
-                        TEMP_SCREENSHOT_FOLDER, f"{tdata_name}_screenshot.png"
-                    )
-                    screenshot.save(file_path)
-                    captured_screenshots[tdata_name] = file_path
-            except Exception:
-                pass
-        else:
-            check_live_status[tdata_name]["live"] = lang["not_active"]
-        cl_win.after(0, refresh_table_global)
-    screenshot_paths = list(captured_screenshots.values())
-    if screenshot_paths:
-        show_marker_selection_popup(screenshot_paths)
-    marker_image = None
-    if os.path.exists(MARKER_IMAGE_PATH):
-        try:
-            marker_image = Image.open(MARKER_IMAGE_PATH)
-        except Exception:
-            pass
-    for tdata_name, file_path in captured_screenshots.items():
-        if marker_image is not None:
-            try:
-                screenshot = Image.open(file_path)
-                is_similar = compare_screenshot_with_marker(screenshot, marker_image)
-                if is_similar:
-                    check_live_status[tdata_name]["live"] = lang["not_active"]
-                else:
-                    check_live_status[tdata_name]["live"] = lang["live"]
-            except Exception:
-                pass
-        else:
-            check_live_status[tdata_name]["live"] = lang["live"]
-        cl_win.after(0, refresh_table_global)
-    cl_win.after(
-        0,
-        lambda: messagebox.showinfo(
-            "Check live", "Đã hoàn thành kiểm tra qua so sánh hình ảnh."
-        ),
-    )
-    cl_win.after(
-        0,
-        lambda: messagebox.showinfo(
-            "Check live",
-            "Quá trình mở telegram hoàn tất. Hệ thống sẽ tự động so sánh hình ảnh sau 2 giây.",
-        ),
-    )
-
-
-def check_live_window():
-    """Tạo cửa sổ check live."""
-    global cl_win, refresh_table_global
-    cl_win = tk.Toplevel(root)
-    cl_win.title(lang["check_live_title"])
-    center_window(cl_win, 1200, 500)
-    size_frame = tk.Frame(cl_win)
-    size_frame.pack(pady=5)
-    tk.Label(size_frame, text="Window Width:").grid(row=0, column=0, padx=5)
-    entry_width = tk.Entry(size_frame, width=6)
-    default_width, default_height = load_window_size(WINDOW_SIZE_FILE)
-    entry_width.insert(0, str(default_width))
-    entry_width.grid(row=0, column=1, padx=5)
-    tk.Label(size_frame, text="Window Height:").grid(row=0, column=2, padx=5)
-    entry_height = tk.Entry(size_frame, width=6)
-    entry_height.insert(0, str(default_height))
-    entry_height.grid(row=0, column=3, padx=5)
-    load_check_live_status_file()
-    columns = ("stt", "tdata", "check_status", "live_status")
-    tree = ttk.Treeview(cl_win, columns=columns, show="headings", height=15)
-    tree.heading("stt", text=lang["stt"])
-    tree.heading("tdata", text="TData")
-    tree.heading("check_status", text=lang["check_status"])
-    tree.heading("live_status", text=lang["live_status"])
-    tree.column("stt", width=50, anchor="center")
-    tree.column("tdata", width=200, anchor="center")
-    tree.column("check_status", width=200, anchor="center")
-    tree.column("live_status", width=200, anchor="center")
-    tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-    def refresh_table():
-        tree.delete(*tree.get_children())
-        tdata_dir = entry_path.get()
-        folders = get_tdata_folders(tdata_dir)
-        for idx, folder in enumerate(folders, start=1):
-            tdata_name = os.path.basename(folder)
-            if tdata_name not in check_live_status:
-                check_live_status[tdata_name] = {
-                    "check": lang["not_checked"],
-                    "live": lang["not_checked"],
-                }
-            row_data = check_live_status[tdata_name]
-            tree.insert(
-                "",
-                tk.END,
-                values=(idx, tdata_name, row_data["check"], row_data["live"]),
-            )
-
-    refresh_table_global = refresh_table
-    refresh_table()
-
-    def switch_button_states(running):
-        if running:
-            btn_start.config(state=tk.DISABLED)
-            btn_pause.config(state=tk.NORMAL)
-        else:
-            btn_start.config(state=tk.NORMAL)
-            btn_pause.config(state=tk.DISABLED)
-
-    def start_check_live():
-        global check_live_thread, tdata_process_map, TEMP_SCREENSHOT_FOLDER
-        tdata_process_map = {}
-        TEMP_SCREENSHOT_FOLDER = os.path.join(os.getcwd(), "temp_screenshots")
-        if os.path.exists(TEMP_SCREENSHOT_FOLDER):
-            shutil.rmtree(TEMP_SCREENSHOT_FOLDER)
-        os.makedirs(TEMP_SCREENSHOT_FOLDER, exist_ok=True)
-        if check_live_thread and check_live_pause_event.is_set():
-            check_live_pause_event.clear()
-            switch_button_states(running=True)
-            return
-        switch_button_states(running=True)
-
-        def worker():
-            tdata_dir = entry_path.get()
-            folders = get_tdata_folders(tdata_dir)
-            for folder in folders:
-                while check_live_pause_event.is_set():
-                    time.sleep(0.3)
-                tdata_name = os.path.basename(folder)
-                check_live_status[tdata_name] = {
-                    "check": lang["checking"],
-                    "live": check_live_status[tdata_name].get(
-                        "live", lang["not_checked"]
-                    ),
-                }
-                cl_win.after(0, refresh_table_global)
-                exe_path = os.path.join(folder, "telegram.exe")
-                if os.path.exists(exe_path):
-                    proc = subprocess.Popen([exe_path])
-                    pid = proc.pid
-                    if tdata_name not in tdata_process_map:
-                        tdata_process_map[tdata_name] = []
-                    tdata_process_map[tdata_name].append(pid)
-                    time.sleep(1)
-                    check_live_status[tdata_name]["check"] = lang["completed"]
-                else:
-                    check_live_status[tdata_name]["check"] = lang["exe_not_found"]
-                cl_win.after(0, refresh_table_global)
-            try:
-                custom_width = int(entry_width.get())
-            except:
-                custom_width = 500
-            try:
-                custom_height = int(entry_height.get())
-            except:
-                custom_height = 300
-            save_window_size(custom_width, custom_height)
-            arrange_telegram_windows(custom_width, custom_height, for_check_live=True)
-            cl_win.after(
-                0,
-                lambda: messagebox.showinfo(
-                    "Check live",
-                    "Quá trình mở telegram hoàn tất.\nHệ thống sẽ tự động so sánh hình ảnh sau 2 giây.",
-                ),
-            )
-            threading.Thread(target=screenshot_comparison_worker, daemon=True).start()
-            global check_live_thread
-            check_live_thread = None
-
-        check_live_thread = threading.Thread(target=worker, daemon=True)
-        check_live_thread.start()
-
-    def pause_check_live():
-        check_live_pause_event.set()
-        switch_button_states(running=False)
-
-    def confirm_check_live():
-        save_check_live_status_file()
-        messagebox.showinfo(
-            "Check live", "Đã lưu trạng thái check live vào file check_live_status.txt"
-        )
-        global confirm_done
-        confirm_done = True
-        btn_copy_inactive.config(state=tk.NORMAL)
-        btn_delete_inactive.config(state=tk.NORMAL)
-        btn_copy_table.config(state=tk.NORMAL)
-        global TEMP_SCREENSHOT_FOLDER
-        if TEMP_SCREENSHOT_FOLDER and os.path.exists(TEMP_SCREENSHOT_FOLDER):
-            shutil.rmtree(TEMP_SCREENSHOT_FOLDER)
-            TEMP_SCREENSHOT_FOLDER = None
-
-    def copy_table():
-        if not confirm_done:
-            messagebox.showwarning(
-                "Copy Table", "Vui lòng bấm '" + lang["confirm"] + "' trước."
-            )
-            return
-        table_text = ""
-        for child in tree.get_children():
-            values = tree.item(child, "values")
-            table_text += "\t".join(str(v) for v in values) + "\n"
-        root.clipboard_clear()
-        root.clipboard_append(table_text)
-        root.update()
-        messagebox.showinfo(
-            "Copy Table", "Đã copy toàn bộ nội dung bảng vào clipboard."
-        )
-
-    def copy_inactive():
-        if not confirm_done:
-            messagebox.showwarning(
-                "Copy Inactive", "Vui lòng bấm '" + lang["confirm"] + "' trước."
-            )
-            return
-        inactive_list = []
-        for child in tree.get_children():
-            values = tree.item(child, "values")
-            if len(values) >= 4 and values[3] == lang["not_active"]:
-                inactive_list.append(values[1])
-        if not inactive_list:
-            messagebox.showinfo(
-                "Copy Inactive", "Không có TData nào ở trạng thái không hoạt động."
-            )
-            return
-        text_inactive = "\n".join(inactive_list)
-        root.clipboard_clear()
-        root.clipboard_append(text_inactive)
-        root.update()
-        messagebox.showinfo(
-            "Copy Inactive",
-            "Đã copy vào clipboard danh sách TData không hoạt động:\n" + text_inactive,
-        )
-
-    def delete_inactive():
-        if not confirm_done:
-            messagebox.showwarning(
-                "Xóa TData", "Vui lòng bấm '" + lang["confirm"] + "' trước."
-            )
-            return
-        auto_close_telegram()
-        tdata_dir = entry_path.get()
-        folders = get_tdata_folders(tdata_dir)
-        deleted = []
-        for folder in folders:
-            tdata_name = os.path.basename(folder)
-            if check_live_status.get(tdata_name, {}).get("live") == lang["not_active"]:
-                normalized_folder = os.path.normpath(folder)
-                if os.path.exists(normalized_folder):
-                    try:
-                        if send2trash:
-                            send2trash(normalized_folder)
-                        else:
-                            shutil.rmtree(normalized_folder)
-                        deleted.append(tdata_name)
-                        check_live_status.pop(tdata_name, None)
-                    except Exception:
-                        pass
-        refresh_table_global()
-        messagebox.showinfo(
-            "Check live",
-            f"Đã xóa {len(deleted)} thư mục không hoạt động:\n" + ", ".join(deleted),
-        )
-        save_check_live_status_file()
-
-    frame_buttons = tk.Frame(cl_win)
-    frame_buttons.pack(pady=5)
-    btn_start = tk.Button(
-        frame_buttons, text=lang["start"], command=start_check_live, width=20
-    )
-    btn_pause = tk.Button(
-        frame_buttons,
-        text=lang["pause"],
-        command=pause_check_live,
-        width=20,
-        state=tk.DISABLED,
-    )
-    btn_confirm = tk.Button(
-        frame_buttons, text=lang["confirm"], command=confirm_check_live, width=20
-    )
-    btn_copy_inactive = tk.Button(
-        frame_buttons,
-        text=lang["copy_inactive"],
-        command=copy_inactive,
-        width=25,
-        state=tk.DISABLED,
-    )
-    btn_delete_inactive = tk.Button(
-        frame_buttons,
-        text=lang["delete_inactive"],
-        command=delete_inactive,
-        width=25,
-        state=tk.DISABLED,
-    )
-    btn_copy_table = tk.Button(
-        frame_buttons,
-        text=lang["copy_table"],
-        command=copy_table,
-        width=20,
-        state=tk.DISABLED,
-    )
-    btn_start.grid(row=0, column=0, padx=5)
-    btn_pause.grid(row=0, column=1, padx=5)
-    btn_confirm.grid(row=0, column=2, padx=5)
-    btn_copy_inactive.grid(row=0, column=3, padx=5)
-    btn_delete_inactive.grid(row=0, column=4, padx=5)
-    btn_copy_table.grid(row=0, column=5, padx=5)
-
-
 def open_settings():
     """Cửa sổ tùy chỉnh: kích thước Telegram, ChatGPT key, ngôn ngữ dịch."""
     popup = tk.Toplevel(root)
@@ -1188,23 +813,16 @@ def init_main_ui():
         command=lambda: arrange_telegram_windows(arrange_width, arrange_height),
         width=18,
     )
-    btn_check_live = tk.Button(
-        frame_buttons,
-        text=lang["check_live"],
-        command=lambda: warn_check_live(),
-        width=18,
-    )
+    btn_close.grid(row=1, column=0, padx=5, pady=5)
+    btn_arrange.grid(row=1, column=1, padx=5, pady=5)
     btn_setting = tk.Button(
         frame_buttons, text="⚙️ Setting", command=open_settings, width=18
     )
     btn_update = tk.Button(
         frame_buttons, text=lang["check_update"], command=check_for_updates, width=18
     )
-    btn_close.grid(row=1, column=0, padx=5, pady=5)
-    btn_arrange.grid(row=1, column=1, padx=5, pady=5)
-    btn_check_live.grid(row=2, column=0, padx=5, pady=5)
-    btn_setting.grid(row=2, column=1, padx=5, pady=5)
-    btn_update.grid(row=2, column=2, padx=5, pady=5)
+    btn_setting.grid(row=2, column=0, padx=5, pady=5)
+    btn_update.grid(row=2, column=1, padx=5, pady=5)
     mini_chat_l_active = {"status": False}
     from mini_chat import (
         set_root,
