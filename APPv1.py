@@ -221,112 +221,6 @@ def delete_all_sessions():
         lang.get("popup_inactive_title", "Thông báo"),
         "Đã xóa session của các tài khoản: " + ", ".join(deleted_accounts),
     )
-    update_logged()
-
-
-def check_for_updates():
-    """Kiểm tra và tải bản cập nhật mới nhất từ GitHub nếu có."""
-    try:
-        url = (
-            f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases/latest"
-        )
-        response = requests.get(url)
-        if response.status_code == 200:
-            release_info = response.json()
-            latest_version = release_info["tag_name"].lstrip("v")
-            if Version(latest_version) > Version(CURRENT_VERSION):
-                if messagebox.askyesno(
-                    "Cập nhật",
-                    lang.get(
-                        "update_available",
-                        "Phiên bản {version} có sẵn. Bạn có muốn cập nhật không?",
-                    ).format(version=latest_version),
-                ):
-                    assets = release_info.get("assets", [])
-                    download_url = None
-                    for asset in assets:
-                        if asset["name"].lower().endswith(".exe"):
-                            download_url = asset["browser_download_url"]
-                            break
-                    if not download_url and assets:
-                        download_url = assets[0]["browser_download_url"]
-                    if download_url:
-                        download_update_with_progress(download_url)
-                    else:
-                        messagebox.showerror(
-                            "Error", "Không tìm thấy file cập nhật trên GitHub."
-                        )
-        else:
-            pass
-    except Exception as e:
-        print(f"Lỗi kiểm tra cập nhật: {e}")
-
-
-def download_update_with_progress(download_url):
-    """Tải file cập nhật với hiển thị tiến trình tải."""
-    local_filename = download_url.split("/")[-1]
-    progress_win = tk.Toplevel(root)
-    progress_win.title("Đang tải cập nhật")
-    progress_win.geometry("550x130")
-    style = ttk.Style(progress_win)
-    style.configure(
-        "Custom.Horizontal.TProgressbar",
-        troughcolor="white",
-        background="blue",
-        thickness=20,
-    )
-    tk.Label(progress_win, text=f"Đang tải: {local_filename}").pack(pady=5)
-    progress_var = tk.DoubleVar(value=0)
-    progress_bar = ttk.Progressbar(
-        progress_win,
-        variable=progress_var,
-        maximum=100,
-        length=500,
-        style="Custom.Horizontal.TProgressbar",
-    )
-    progress_bar.pack(pady=5)
-    percent_label = tk.Label(progress_win, text="0%")
-    percent_label.pack(pady=5)
-    progress_win.update()
-    try:
-        response = requests.get(download_url, stream=True)
-        total_length = response.headers.get("content-length")
-        if total_length is None:
-            messagebox.showerror(
-                "Error", "Không xác định được kích thước file cập nhật."
-            )
-            progress_win.destroy()
-            return
-        total_length = int(total_length)
-        downloaded = 0
-        with open(local_filename, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-                    downloaded += len(chunk)
-                    percent = (downloaded / total_length) * 100
-                    progress_var.set(percent)
-                    percent_label.config(text=f"{int(percent)}%")
-                    progress_win.update_idletasks()
-        progress_win.destroy()
-        notify_win = tk.Toplevel(root)
-        notify_win.title("Tải cập nhật thành công")
-        tk.Label(notify_win, text=f"Đã tải xong {local_filename}").pack(pady=10)
-
-        def open_update_folder():
-            folder = os.path.abspath(os.getcwd())
-            try:
-                os.startfile(folder)
-            except Exception as e:
-                messagebox.showerror("Error", f"Lỗi mở thư mục: {e}")
-
-        tk.Button(
-            notify_win, text="Mở vị trí file cập nhật", command=open_update_folder
-        ).pack(pady=5)
-        tk.Button(notify_win, text="Close", command=notify_win.destroy).pack(pady=5)
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to download update: {e}")
-        progress_win.destroy()
 
 
 def save_path():
@@ -338,8 +232,6 @@ def save_path():
         messagebox.showinfo(
             "Lưu thành công", lang.get("msg_saved_path", "Đã lưu đường dẫn!")
         )
-        update_stats()
-        update_logged()
     else:
         messagebox.showerror(
             "Lỗi", lang.get("msg_error_path", "Thư mục không tồn tại!")
@@ -372,50 +264,6 @@ def browse_folder():
     folder_selected = filedialog.askdirectory()
     entry_path.delete(0, tk.END)
     entry_path.insert(0, folder_selected)
-
-
-def update_stats():
-    """Cập nhật thống kê số lượng tdata trong các thư mục."""
-    folder_path = entry_path.get()
-    if not os.path.exists(folder_path):
-        return
-    try:
-        subfolders = [
-            d
-            for d in os.listdir(folder_path)
-            if os.path.isdir(os.path.join(folder_path, d))
-        ]
-    except Exception as e:
-        messagebox.showerror("Lỗi", f"Không thể đọc thư mục: {e}")
-        return
-    info_list = []
-    for sub in subfolders:
-        sub_path = os.path.join(folder_path, sub)
-        tdata_count = sum(
-            1
-            for item in os.listdir(sub_path)
-            if item.lower() == "tdata" and os.path.isdir(os.path.join(sub_path, item))
-        )
-        info_list.append(f"- {sub}: có {tdata_count} tdata folder(s)")
-    info_text = "\n".join(info_list) if info_list else "Không có thư mục con nào."
-    text_stats.delete("1.0", tk.END)
-    text_stats.insert(tk.END, info_text)
-
-
-def update_logged():
-    """Cập nhật danh sách các tài khoản đã đăng nhập."""
-    tdata_dir = entry_path.get()
-    logged_list = []
-    for folder in get_tdata_folders(tdata_dir):
-        session_file = os.path.join(folder, "session.session")
-        session_folder = os.path.join(folder, "session")
-        if os.path.exists(session_file) or os.path.exists(session_folder):
-            logged_list.append(os.path.basename(folder))
-    text_logged.delete("1.0", tk.END)
-    if logged_list:
-        text_logged.insert(tk.END, ", ".join(logged_list))
-    else:
-        text_logged.insert(tk.END, lang.get("not_found", "Không tìm thấy!"))
 
 
 # ======== HẾT PHẦN 2/6 ========
@@ -649,7 +497,6 @@ def init_main_ui():
     default_font = tkFont.nametofont("TkDefaultFont")
     default_font.configure(family="Arial Unicode MS", size=10)
     root.option_add("*Font", default_font)
-    threading.Thread(target=check_for_updates, daemon=True).start()
     label_title = tk.Label(
         root, text=lang["title"], font=("Arial Unicode MS", 14, "bold")
     )
@@ -706,11 +553,7 @@ def init_main_ui():
     btn_setting = tk.Button(
         frame_buttons, text="⚙️ Setting", command=open_settings, width=18
     )
-    btn_update = tk.Button(
-        frame_buttons, text=lang["check_update"], command=check_for_updates, width=18
-    )
     btn_setting.grid(row=2, column=0, padx=5, pady=5)
-    btn_update.grid(row=2, column=1, padx=5, pady=5)
     mini_chat_l_active = {"status": False}
     from mini_chat import (
         set_root,
@@ -737,21 +580,6 @@ def init_main_ui():
         frame_buttons, text="Mini Chat-L", width=18, command=toggle_mini_chat_l
     )
     btn_mini_chat_l.grid(row=3, column=1, padx=5, pady=5)
-    frame_stats = tk.Frame(root)
-    frame_stats.pack(pady=10)
-    label_stats = tk.Label(frame_stats, text=lang["stats_label"])
-    label_stats.pack()
-    text_stats = tk.Text(frame_stats, width=70, height=10)
-    text_stats.pack()
-    frame_summary = tk.Frame(root)
-    frame_summary.pack(pady=10)
-    text_summary = tk.Text(frame_summary, width=70, height=5)
-    frame_summary.pack_forget()
-    frame_logged = tk.Frame(root)
-    frame_logged.pack(pady=10)
-    global text_logged
-    text_logged = tk.Text(frame_logged, width=70, height=5)
-    frame_logged.pack_forget()
     frame_log = tk.Frame(root)
     frame_log.pack(pady=10)
     label_log = tk.Label(frame_log, text=lang["log_label"])
@@ -762,8 +590,6 @@ def init_main_ui():
     saved_path = load_path()
     if saved_path:
         entry_path.insert(0, saved_path)
-        update_stats()
-        update_logged()
     footer = tk.Label(root, text=VERSION_INFO, font=("Arial Unicode MS", 8))
     footer.pack(side="bottom", fill="x", pady=5)
     root.protocol("WM_DELETE_WINDOW", on_closing)
