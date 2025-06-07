@@ -500,28 +500,6 @@ def run_tool():
     log_message("Đã hoàn tất cập nhật quyền riêng tư.")
 
 
-def report_function():
-    messagebox.showinfo(
-        "Report", lang.get("report_in_development", "Chức năng đang phát triển!")
-    )
-
-
-def warn_auto_it():
-    """Cảnh báo trước khi chạy chức năng AutoIT, tắt mini chat nếu đang bật."""
-    try:
-        from mini_chat import destroy_mini_chat
-
-        destroy_mini_chat()
-    except Exception:
-        pass
-    warning_msg = (
-        "【Tiếng Việt】: Trước khi khởi chạy chức năng AutoIT, chúng tôi khuyến nghị bạn kiểm tra trạng thái trực tiếp của các tài khoản Telegram.\n"
-        "【English】: Before initiating the AutoIT function, we strongly recommend performing a live check on your Telegram accounts.\n"
-        "【中文】: 在启动 AutoIT 功能之前，我们强烈建议您先对所有 Telegram 账户进行实时检查。"
-    )
-    messagebox.showinfo("Khuyến cáo", warning_msg)
-
-
 def open_settings():
     """Cửa sổ tùy chỉnh: kích thước Telegram, ChatGPT key, ngôn ngữ dịch."""
     popup = tk.Toplevel(root)
